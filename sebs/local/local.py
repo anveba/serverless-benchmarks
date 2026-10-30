@@ -311,15 +311,17 @@ class Local(System):
             "CONTAINER_GID": str(os.getgid()),
             "CONTAINER_USER": self._system_config.username(self.name(), code_package.language_name),
         }
-        # Function containers share the Docker bridge with the storage containers,
-        # so they use the internal addresses.
+        # On Linux, function containers share the Docker bridge with the storage containers,
+        # so they use the internal addresses. Elsewhere, the internal address is localhost
+        # on the host, which does not reach the storage from inside a function container.
+        use_external_storage = not is_linux()
         if self.config.resources.storage_config:
-            storage_envs = self.config.resources.storage_config.envs(external=False)
+            storage_envs = self.config.resources.storage_config.envs(external=use_external_storage)
             environment = {**storage_envs, **environment}
 
         if code_package.uses_nosql:
             nosql_storage = self.system_resources.get_nosql_storage()
-            environment = {**environment, **nosql_storage.envs(external=False)}
+            environment = {**environment, **nosql_storage.envs(external=use_external_storage)}
 
             for original_name, actual_name in nosql_storage.get_tables(
                 code_package.benchmark
