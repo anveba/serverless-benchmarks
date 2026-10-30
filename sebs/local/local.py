@@ -53,6 +53,8 @@ class Local(System):
     """
 
     DEFAULT_PORT = 9000
+    LIMITS_MEMORY_PER_VCPU = 1769
+    LIMITS_MAX_VCPUS = 6
     # Seconds to wait for the function server to start
     STARTUP_TIMEOUT = 30
 
@@ -111,6 +113,24 @@ class Local(System):
         self._remove_containers = val
 
     @property
+    def enforce_limits(self) -> bool:
+        """Get whether containers are limited to the function's memory and proportional CPU.
+
+        Returns:
+            bool: True if resource limits are applied to function containers
+        """
+        return self._enforce_limits
+
+    @enforce_limits.setter
+    def enforce_limits(self, val: bool) -> None:
+        """Set whether containers are limited to the function's memory and proportional CPU.
+
+        Args:
+            val: True to apply resource limits to function containers
+        """
+        self._enforce_limits = val
+
+    @property
     def measure_interval(self) -> int:
         """Get the memory measurement interval.
 
@@ -165,6 +185,7 @@ class Local(System):
         self.logging_handlers = logger_handlers
         self._config = config
         self._remove_containers = True
+        self._enforce_limits = False
         self._memory_measurement_path: Optional[str] = None
         # disable external measurements
         self._measure_interval = -1
@@ -328,8 +349,6 @@ class Local(System):
             ).items():
                 environment[f"NOSQL_STORAGE_TABLE_{original_name}"] = actual_name
 
-        # FIXME: make CPUs configurable
-        # FIXME: configure memory
         # FIXME: configure timeout
         # cpuset_cpus=cpuset,
         # required to access perf counters
@@ -348,6 +367,13 @@ class Local(System):
             "detach": True,
             # "tty": True,
         }
+        if self.enforce_limits:
+            # Follows AWS Lambda, where CPU allocation is proportional to memory.
+            memory = code_package.benchmark_config.memory
+            container_kwargs["mem_limit"] = f"{memory}m"
+            container_kwargs["memswap_limit"] = f"{memory}m"
+            vcpus = min(self.LIMITS_MAX_VCPUS, memory / self.LIMITS_MEMORY_PER_VCPU)
+            container_kwargs["nano_cpus"] = int(vcpus * 1e9)
 
         # If SeBS is running on non-linux platforms,
         # container port must be mapped to host port to make it reachable

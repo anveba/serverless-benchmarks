@@ -719,6 +719,12 @@ def local():
     help="Remove containers after stopping.",
 )
 @click.option(
+    "--memory",
+    default=None,
+    type=int,
+    help="Limit containers to this memory in MB, with CPU proportional as on AWS Lambda.",
+)
+@click.option(
     "--architecture",
     default=None,
     type=click.Choice(["x64", "arm64"]),
@@ -733,6 +739,7 @@ def start(
     storage_configuration,
     measure_interval,
     remove_containers,
+    memory,
     architecture,
     **kwargs,
 ):
@@ -761,6 +768,9 @@ def start(
         experiment_config,
         logging_filename=logging_filename,
     )
+    if memory is not None:
+        benchmark_obj.benchmark_config.memory = memory
+        deployment_client.enforce_limits = True
     input_config = benchmark_obj.prepare_input(
         deployment_client.system_resources,
         size=benchmark_input_size,
@@ -769,12 +779,13 @@ def start(
     result.set_storage(deployment_client.system_resources.get_storage())
     result.add_input(input_config)
 
+    function_name = deployment_client.default_function_name(
+        benchmark_obj, deployment_client.config.resources
+    )
     for i in range(deployments):
+        # A repeated name would return the cached function instead of a new container.
         func = deployment_client.get_function(
-            benchmark_obj,
-            deployment_client.default_function_name(
-                benchmark_obj, deployment_client.config.resources
-            ),
+            benchmark_obj, function_name if i == 0 else f"{function_name}-{i}"
         )
         result.add_function(func)
 
