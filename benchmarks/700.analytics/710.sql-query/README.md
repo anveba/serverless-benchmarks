@@ -2,7 +2,8 @@
 
 Runs TPC-H queries with [DuckDB](https://duckdb.org) over Parquet files in object storage.
 The function runs Q1 (scan and group-by), Q3 (three-table join), Q6 (scan and filter),
-and Q12 (two-table join) by default. Set `queries` in the input to select a subset.
+Q12 (two-table join), and Q21 (memory-heavy, with correlated subqueries over `lineitem`) by default.
+Set `queries` in the input to select a subset.
 
 ## Input sizes
 
@@ -15,8 +16,11 @@ in the system's temporary directory.
 | `small` | 1            | 16 MB            |
 | `large` | 10           | 64 MB            |
 
+To use another scale factor, set `SEBS_SQL_SCALE_FACTOR` when deploying. It applies the file size
+of `large`, and overrides the selected input size.
+
 Results are validated against the official TPC-H answers shipped with DuckDB at scale factors
-0.01 and 1. Scale factor 10 has no official answers, so `large` is compared against a query
+0.01 and 1. Other scale factors have no official answers, so they are compared against a query
 executed on the machine running SeBS.
 
 ## Data access

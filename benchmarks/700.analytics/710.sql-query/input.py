@@ -2,11 +2,12 @@
 import csv
 import io
 import os
+import shutil
 import tempfile
 from pathlib import Path
 
-QUERIES = {"q1": 1, "q3": 3, "q6": 6, "q12": 12}
-TABLES = ["customer", "orders", "lineitem"]
+QUERIES = {"q1": 1, "q3": 3, "q6": 6, "q12": 12, "q21": 21}
+TABLES = ["customer", "orders", "lineitem", "supplier", "nation"]
 
 # Files are split, so that parallel queries can assign them to workers.
 SIZES = {
@@ -14,6 +15,9 @@ SIZES = {
     "small": {"scale_factor": 1, "file_size": "16MB", "row_group_size": 122880},
     "large": {"scale_factor": 10, "file_size": "64MB", "row_group_size": 122880},
 }
+
+# Selects a scale factor beyond the fixed input sizes, generated with the file layout of large.
+SCALE_FACTOR_OVERRIDE = "SEBS_SQL_SCALE_FACTOR"
 
 # Relative tolerance of comparisons; reference answers have a limited number of decimals.
 TOLERANCE = 1e-6
@@ -49,21 +53,33 @@ def _database(scale_factor):
     return con
 
 
-def _parquet_files(size):
-    params = SIZES[size]
-    path = _cache_dir(params["scale_factor"]) / size
-    marker = path / "files.complete"
-    if not marker.exists():
-        path.mkdir(exist_ok=True)
-        con = _database(params["scale_factor"])
-        for table in TABLES:
-            con.execute(
-                f"COPY {table} TO '{path / table}' (FORMAT parquet, OVERWRITE_OR_IGNORE, "
-                f"FILE_SIZE_BYTES '{params['file_size']}', "
-                f"ROW_GROUP_SIZE {params['row_group_size']})"
-            )
-        con.close()
+def _workload(size):
+    """Return the name of the workload, used in paths, and its parameters."""
+    if SCALE_FACTOR_OVERRIDE in os.environ:
+        scale_factor = float(os.environ[SCALE_FACTOR_OVERRIDE])
+        scale_factor = int(scale_factor) if scale_factor.is_integer() else scale_factor
+        return f"sf{scale_factor}", {**SIZES["large"], "scale_factor": scale_factor}
+    return size, SIZES[size]
+
+
+def _parquet_files(name, params):
+    path = _cache_dir(params["scale_factor"]) / name
+    path.mkdir(exist_ok=True)
+    con = None
+    for table in TABLES:
+        marker = path / f"{table}.complete"
+        if marker.exists():
+            continue
+        con = con or _database(params["scale_factor"])
+        shutil.rmtree(path / table, ignore_errors=True)
+        con.execute(
+            f"COPY {table} TO '{path / table}' (FORMAT parquet, "
+            f"FILE_SIZE_BYTES '{params['file_size']}', "
+            f"ROW_GROUP_SIZE {params['row_group_size']})"
+        )
         marker.touch()
+    if con is not None:
+        con.close()
     return {table: sorted((path / table).iterdir()) for table in TABLES}
 
 
@@ -82,11 +98,12 @@ def _parquet_files(size):
 def generate_input(
     data_dir, size, benchmarks_bucket, input_paths, output_paths, upload_func, nosql_func
 ):
+    name, params = _workload(size)
     tables = {}
-    for table, files in _parquet_files(size).items():
+    for table, files in _parquet_files(name, params).items():
         tables[table] = []
         for file in files:
-            key = os.path.join(size, table, file.name)
+            key = os.path.join(name, table, file.name)
             upload_func(0, key, str(file))
             tables[table].append(os.path.join(input_paths[0], key))
 
@@ -96,7 +113,7 @@ def generate_input(
             "input": input_paths[0],
             "output": output_paths[0],
         },
-        "scale_factor": SIZES[size]["scale_factor"],
+        "scale_factor": params["scale_factor"],
         "access_mode": "httpfs",
         "queries": list(QUERIES),
         "tables": tables,
@@ -140,7 +157,10 @@ def validate_output(data_dir, input_config, output, language, storage=None):
             return f"Query {query} returned {len(rows)} rows, expected {len(expected)}"
         for idx, (row, expected_row) in enumerate(zip(rows, expected)):
             if len(row) != len(expected_row):
-                return f"Query {query} row {idx} has {len(row)} columns, expected {len(expected_row)}"
+                return (
+                    f"Query {query} row {idx} has {len(row)} columns, "
+                    f"expected {len(expected_row)}"
+                )
             for value, expected_value in zip(row, expected_row):
                 if not _matches(value, expected_value):
                     return f"Query {query} row {idx}: got {value}, expected {expected_value}"
