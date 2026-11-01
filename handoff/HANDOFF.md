@@ -1,5 +1,7 @@
 # Handoff: SQL benchmark for SeBS
 
+**AWS update (2026-11-01):** Single-function AWS deployment, answer validation at SF0.01/SF1, and a warm SF1 memory sweep now work. Follow [the AWS setup guide](../docs/sql-aws-setup.md) for reproducible commands; read [AWS_HANDOFF.md](AWS_HANDOFF.md) for results and remaining gaps. The local findings below describe the earlier local work.
+
 Status of the `sql-benchmark` branch, based on upstream `master` at `089e5c6`.
 Remove this folder before opening a PR upstream: `git rm -r handoff`.
 
@@ -7,12 +9,11 @@ Remove this folder before opening a PR upstream: `git rm -r handoff`.
 
 `710.sql-query` runs TPC-H queries with DuckDB over Parquet files in object storage, on one
 function or split across several. It works end to end on the SeBS local deployment.
-**Nothing has run on AWS yet.** The local results show that the benchmark works and roughly how much
-memory it needs, but they say nothing about real speed or cost.
+The local results show that the benchmark works and roughly how much memory it needs; they do not establish cloud speed or cost. The subsequent AWS runs are recorded separately in [AWS_HANDOFF.md](AWS_HANDOFF.md).
 
 | Project goal | Status |
 |---|---|
-| One query on a single function | Works locally, not measured on AWS |
+| One query on a single function | Validated locally and on AWS at SF0.01/SF1 |
 | Comparison with an always-on service and Athena | Not started |
 | Different input sizes | Works locally from SF0.01 to SF30 |
 | Query split across workers | Prototype gives correct answers, performance unknown |
@@ -128,8 +129,7 @@ Do not report these as performance results.
 
 ## Known gaps
 
-* **The AWS code path has never run.** That covers the credentials in `s3_secret()` in `function.py`,
-  S3 access from the function's role, and packaging. Azure and GCP only support download mode.
+* **AWS single-function path tested:** Python 3.12/x64 packaging, S3 access, and SF0.01/SF1 validation passed. Python 3.11 packaging failed. Azure and GCP only support download mode. See the AWS handoff for remaining gaps.
 * **Local timer bug, not fixed.** `dockerfiles/local/python/server.py` stops the timer before calling
   the handler, so local `exec_time` measures only the import (SeBS recorded 7 microseconds for a
   warm run with a 253 ms client time). Use client time or the benchmark's own timers. A fix needs a
@@ -153,7 +153,7 @@ Do not report these as performance results.
 * The first local image pull may fail with a macOS Keychain error (`User canceled the operation`).
   The images are public, so `docker pull` gets past it.
 
-## Next steps
+## Original next steps (superseded by AWS_HANDOFF.md)
 
 1. **Set up AWS.** Create budget alerts first, then credentials, and use one region for everything.
    Check for research or education credits, since they decide how large the runs can be.

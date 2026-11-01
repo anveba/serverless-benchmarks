@@ -65,3 +65,10 @@ Intermediate objects are not removed after the query.
 proportional to memory as on AWS Lambda (1 vCPU per 1769 MB, up to 6). The function configures
 DuckDB from these limits. This approximates when a query runs out of memory, but local times do not
 predict cloud performance: storage is on the same machine and has no network latency.
+
+## AWS validation
+
+Single-function execution was validated on AWS with Python 3.12/x64 at SF0.01 and SF1.
+Use `configs/sql-aws.example.json` as a template and follow [the AWS setup guide](../../../docs/sql-aws-setup.md).
+When changing input size, pass `--update-storage`: the current storage cache does not track sizes.
+Parallel AWS execution and the EC2/Athena baselines are not implemented.

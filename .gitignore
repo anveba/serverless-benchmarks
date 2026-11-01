@@ -192,3 +192,8 @@ cache
 .vscode/
 # MacOS Finder
 **/.DS_Store
+
+# Local SQL AWS configuration and generated cloud artifacts
+/configs/sql-aws.json
+/results/
+/outputs/
