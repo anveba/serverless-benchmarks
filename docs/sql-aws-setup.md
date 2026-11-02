@@ -165,15 +165,67 @@ Raw samples are `warm_results_M.json`; processed samples are `warm_results_M-pro
 
 This implementation of `perf-cost` uses HTTP and creates a **public Function URL (`NONE` authentication)**. The earlier correctness checks use the SDK. Compare provider execution timings across them, not client timings as if the invocation paths were identical. Do not leave the public endpoint available after testing.
 
-## 8. Troubleshooting
+## 8. Validate SF10 and measure cold/warm behavior
 
+SF10 generation/upload require more host disk space and time than SF1. First run its correctness check:
+
+```bash
+sebs benchmark invoke 710.sql-query large \
+  --config configs/sql-aws.json --deployment aws \
+  --architecture x64 --language python --language-version 3.12 \
+  --memory 2048 --trigger library --repetitions 1 --validate --update-storage \
+  --cache cache-sql-aws --output-dir results/sql-aws-sf10-check --verbose
+sebs benchmark process --config configs/sql-aws.json --deployment aws \
+  --cache cache-sql-aws --output-dir results/sql-aws-sf10-check
+sebs benchmark statistics results/sql-aws-sf10-check/results.json
+```
+
+Require `output validation passed` in the invocation output before claiming correctness. The result JSON does not store a separate validation flag. SF10 is checked against host-side DuckDB execution, not independent published answers. The recorded warm invocation took approximately 102 seconds at 2048 MB.
+
+Copy the portable configs:
+
+```bash
+cp configs/sql-aws-sf1-cold-warm.example.json configs/sql-aws-sf1-cold-warm.json
+cp configs/sql-aws-sf10-cold-warm.example.json configs/sql-aws-sf10-cold-warm.json
+```
+
+If using an explicit role, set `deployment.aws.lambda-role` in both copies to match `sql-aws.json`; otherwise leave it empty. Both templates use Python 3.12, 2048 MB, five cold plus five warm samples, and one invocation at a time. Both modes use HTTP. SeBS enforces cold starts, discards warm-up, and filters cold invocations from the warm samples.
+
+Run SF1, then SF10 (allow roughly 20 minutes or more for SF10):
+
+```bash
+sebs experiment invoke perf-cost \
+  --config configs/sql-aws-sf1-cold-warm.json --deployment aws \
+  --cache cache-sql-aws --output-dir results/sql-aws-sf1-cold-warm --verbose
+sebs experiment process perf-cost \
+  --config configs/sql-aws-sf1-cold-warm.json --deployment aws \
+  --cache cache-sql-aws --output-dir results/sql-aws-sf1-cold-warm
+sebs benchmark statistics results/sql-aws-sf1-cold-warm/perf-cost/cold_results_2048-processed.json
+sebs benchmark statistics results/sql-aws-sf1-cold-warm/perf-cost/warm_results_2048-processed.json
+
+sebs experiment invoke perf-cost \
+  --config configs/sql-aws-sf10-cold-warm.json --deployment aws \
+  --cache cache-sql-aws --output-dir results/sql-aws-sf10-cold-warm --verbose
+sebs experiment process perf-cost \
+  --config configs/sql-aws-sf10-cold-warm.json --deployment aws \
+  --cache cache-sql-aws --output-dir results/sql-aws-sf10-cold-warm
+sebs benchmark statistics results/sql-aws-sf10-cold-warm/perf-cost/cold_results_2048-processed.json
+sebs benchmark statistics results/sql-aws-sf10-cold-warm/perf-cost/warm_results_2048-processed.json
+
+```
+
+Processing must find five measured invocations per group. `process` retrieves metrics; it does not run an experiment. A directory alone does not establish completion: check for raw `cold_results_2048.json` and `warm_results_2048.json` before processing. Use a new output directory when repeating an experiment.
+
+## 9. Troubleshooting
+
+- **SDK read timeout at 60 seconds:** this branch gives synchronous SDK invocations a 960-second read timeout, 10-second connection timeout, and one total attempt. This covers standard Lambda's 900-second maximum without automatic duplicate requests. It does not change the configured 300-second function timeout. Inspect CloudWatch before retrying a failed client request: execution may have continued.
 - **Python 3.11 package build fails:** the tested build attempted to compile DuckDB and a NumPy dependency without a compiler. Use the tested Python 3.12 runtime in the template and commands.
 - **S3 404 after changing size:** rerun the invocation with `--update-storage`. The current cache tracks upload status per benchmark, not per size.
 - **MemorySize rejected:** use allocations allowed by the account. The tested account rejected 4096 MB and accepted up to 3008 MB. This is an allocation limit, not a query out-of-memory error. Preserve result files for allocations completed before the failure; run only the remaining allocation in a new directory and process both directories.
 - **Invocation fails without an exception in SeBS output:** inspect the function's CloudWatch log group (`/aws/lambda/<function-name>`). Keep the failed `experiments.json` to match request IDs.
 - **Temporary disk fills:** download mode fetches whole input files, and DuckDB can spill in either mode. Lambda defaults to 512 MB of temporary storage; SeBS does not currently configure `EphemeralStorage`. Start with `httpfs` and the validated sizes.
 
-## 9. Cleanup
+## 10. Cleanup
 
 Keep the cache while continuing experiments. When finished, preview cleanup using this branch's actual CLI (older docs use different command names):
 

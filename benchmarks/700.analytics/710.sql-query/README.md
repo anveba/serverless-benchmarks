@@ -69,6 +69,8 @@ predict cloud performance: storage is on the same machine and has no network lat
 ## AWS validation
 
 Single-function execution was validated on AWS with Python 3.12/x64 at SF0.01 and SF1.
+SF10 execution and controlled cold/warm measurements at SF1/SF10 also completed.
+Each invocation runs all five queries; independent query-arrival workloads are not implemented.
 Use `configs/sql-aws.example.json` as a template and follow [the AWS setup guide](../../../docs/sql-aws-setup.md).
 When changing input size, pass `--update-storage`: the current storage cache does not track sizes.
 Parallel AWS execution and the EC2/Athena baselines are not implemented.

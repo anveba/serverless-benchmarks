@@ -1,6 +1,6 @@
 # Handoff: SQL benchmark for SeBS
 
-**AWS update (2026-11-01):** Single-function AWS deployment, answer validation at SF0.01/SF1, and a warm SF1 memory sweep now work. Follow [the AWS setup guide](../docs/sql-aws-setup.md) for reproducible commands; read [AWS_HANDOFF.md](AWS_HANDOFF.md) for results and remaining gaps. The local findings below describe the earlier local work.
+**AWS update (2026-11-02):** Single-function AWS deployment, answer validation at SF0.01/SF1, SF10 execution, the SF1 memory sweep, and SF1/SF10 cold/warm measurements now work. Follow [the AWS setup guide](../docs/sql-aws-setup.md) for reproducible commands; read [AWS_HANDOFF.md](AWS_HANDOFF.md) for results and remaining gaps. The local findings below describe the earlier local work.
 
 Status of the `sql-benchmark` branch, based on upstream `master` at `089e5c6`.
 Remove this folder before opening a PR upstream: `git rm -r handoff`.

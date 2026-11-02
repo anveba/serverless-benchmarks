@@ -1,0 +1,1259 @@
+{
+  "run_date": "2026-11-01",
+  "region": "us-east-1",
+  "architecture": "x64",
+  "python": "3.12",
+  "duckdb": "2.0.0",
+  "queries": [
+    "q1",
+    "q3",
+    "q6",
+    "q12",
+    "q21"
+  ],
+  "trigger": "http",
+  "cache_policy": "new connection per query; external file cache disabled",
+  "validation": "perf-cost records execution failures; it does not independently validate SQL answers",
+  "samples": [
+    {
+      "scale_factor": 1,
+      "mode": "cold",
+      "sample": 1,
+      "memory_mb": 2048,
+      "cold_start": true,
+      "failure": false,
+      "execution_us": 10193220,
+      "initialization_us": 91060,
+      "client_us": 10576258,
+      "billed_ms": 10285,
+      "gb_seconds": 20.57,
+      "max_memory_mb": 394.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 324,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 2657316.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 762255.0,
+            "setup_time": 80582.0
+          },
+          "q12": {
+            "bytes_read": 68686624,
+            "connect_time": 127155.0,
+            "get_requests": 229,
+            "head_requests": 17,
+            "query_time": 1134251.0,
+            "setup_time": 87935.0
+          },
+          "q21": {
+            "bytes_read": 113698959,
+            "connect_time": 116405.0,
+            "get_requests": 479,
+            "head_requests": 19,
+            "query_time": 2215248.0,
+            "setup_time": 183786.0
+          },
+          "q3": {
+            "bytes_read": 70179318,
+            "connect_time": 124011.0,
+            "get_requests": 210,
+            "head_requests": 18,
+            "query_time": 1007419.0,
+            "setup_time": 138253.0
+          },
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 124443.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 533956.0,
+            "setup_time": 59278.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 1,
+      "mode": "cold",
+      "sample": 2,
+      "memory_mb": 2048,
+      "cold_start": true,
+      "failure": false,
+      "execution_us": 10639030,
+      "initialization_us": 89200,
+      "client_us": 12360271,
+      "billed_ms": 10729,
+      "gb_seconds": 21.458,
+      "max_memory_mb": 395.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 325,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 2709711.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 752768.0,
+            "setup_time": 78321.0
+          },
+          "q12": {
+            "bytes_read": 77637757,
+            "connect_time": 124381.0,
+            "get_requests": 224,
+            "head_requests": 17,
+            "query_time": 1230751.0,
+            "setup_time": 120203.0
+          },
+          "q21": {
+            "bytes_read": 112990473,
+            "connect_time": 126641.0,
+            "get_requests": 480,
+            "head_requests": 19,
+            "query_time": 2300278.0,
+            "setup_time": 193772.0
+          },
+          "q3": {
+            "bytes_read": 69335193,
+            "connect_time": 125811.0,
+            "get_requests": 213,
+            "head_requests": 18,
+            "query_time": 1103418.0,
+            "setup_time": 157851.0
+          },
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 116569.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 576977.0,
+            "setup_time": 72838.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 1,
+      "mode": "cold",
+      "sample": 3,
+      "memory_mb": 2048,
+      "cold_start": true,
+      "failure": false,
+      "execution_us": 10388230,
+      "initialization_us": 84120,
+      "client_us": 10945616,
+      "billed_ms": 10473,
+      "gb_seconds": 20.946,
+      "max_memory_mb": 391.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 322,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 2902773.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 726834.0,
+            "setup_time": 83734.0
+          },
+          "q12": {
+            "bytes_read": 61779552,
+            "connect_time": 119741.0,
+            "get_requests": 227,
+            "head_requests": 17,
+            "query_time": 1143989.0,
+            "setup_time": 102129.0
+          },
+          "q21": {
+            "bytes_read": 113699158,
+            "connect_time": 123808.0,
+            "get_requests": 479,
+            "head_requests": 19,
+            "query_time": 2211933.0,
+            "setup_time": 175096.0
+          },
+          "q3": {
+            "bytes_read": 69335193,
+            "connect_time": 121967.0,
+            "get_requests": 213,
+            "head_requests": 18,
+            "query_time": 1001036.0,
+            "setup_time": 141908.0
+          },
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 123689.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 529582.0,
+            "setup_time": 51927.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 1,
+      "mode": "cold",
+      "sample": 4,
+      "memory_mb": 2048,
+      "cold_start": true,
+      "failure": false,
+      "execution_us": 10265720,
+      "initialization_us": 70970,
+      "client_us": 10615463,
+      "billed_ms": 10337,
+      "gb_seconds": 20.674,
+      "max_memory_mb": 392.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 323,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 2013260.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 974629.0,
+            "setup_time": 69002.0
+          },
+          "q12": {
+            "bytes_read": 79438594,
+            "connect_time": 159158.0,
+            "get_requests": 223,
+            "head_requests": 17,
+            "query_time": 1175648.0,
+            "setup_time": 93357.0
+          },
+          "q21": {
+            "bytes_read": 113699158,
+            "connect_time": 166257.0,
+            "get_requests": 479,
+            "head_requests": 19,
+            "query_time": 2400710.0,
+            "setup_time": 161497.0
+          },
+          "q3": {
+            "bytes_read": 69335193,
+            "connect_time": 171831.0,
+            "get_requests": 213,
+            "head_requests": 18,
+            "query_time": 1024778.0,
+            "setup_time": 158897.0
+          },
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 159977.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 551473.0,
+            "setup_time": 60298.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 1,
+      "mode": "cold",
+      "sample": 5,
+      "memory_mb": 2048,
+      "cold_start": true,
+      "failure": false,
+      "execution_us": 10395680,
+      "initialization_us": 95790,
+      "client_us": 10763010,
+      "billed_ms": 10492,
+      "gb_seconds": 20.984,
+      "max_memory_mb": 398.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 328,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 2648784.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 768988.0,
+            "setup_time": 75759.0
+          },
+          "q12": {
+            "bytes_read": 65092851,
+            "connect_time": 123934.0,
+            "get_requests": 231,
+            "head_requests": 17,
+            "query_time": 1191659.0,
+            "setup_time": 106407.0
+          },
+          "q21": {
+            "bytes_read": 113554768,
+            "connect_time": 117724.0,
+            "get_requests": 479,
+            "head_requests": 19,
+            "query_time": 2257297.0,
+            "setup_time": 187199.0
+          },
+          "q3": {
+            "bytes_read": 69335193,
+            "connect_time": 124585.0,
+            "get_requests": 213,
+            "head_requests": 18,
+            "query_time": 1079427.0,
+            "setup_time": 141495.0
+          },
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 127074.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 560447.0,
+            "setup_time": 55431.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 1,
+      "mode": "warm",
+      "sample": 1,
+      "memory_mb": 2048,
+      "cold_start": false,
+      "failure": false,
+      "execution_us": 7132820,
+      "initialization_us": 0,
+      "client_us": 8436869,
+      "billed_ms": 7133,
+      "gb_seconds": 14.266,
+      "max_memory_mb": 398.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 328,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 126980.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 687634.0,
+            "setup_time": 71688.0
+          },
+          "q12": {
+            "bytes_read": 81142226,
+            "connect_time": 122769.0,
+            "get_requests": 222,
+            "head_requests": 17,
+            "query_time": 1148855.0,
+            "setup_time": 105169.0
+          },
+          "q21": {
+            "bytes_read": 114244210,
+            "connect_time": 119949.0,
+            "get_requests": 477,
+            "head_requests": 19,
+            "query_time": 2270828.0,
+            "setup_time": 200902.0
+          },
+          "q3": {
+            "bytes_read": 69335193,
+            "connect_time": 124111.0,
+            "get_requests": 213,
+            "head_requests": 18,
+            "query_time": 1017940.0,
+            "setup_time": 155495.0
+          },
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 120695.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 556438.0,
+            "setup_time": 53993.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 1,
+      "mode": "warm",
+      "sample": 2,
+      "memory_mb": 2048,
+      "cold_start": false,
+      "failure": false,
+      "execution_us": 6959070,
+      "initialization_us": 0,
+      "client_us": 6962049,
+      "billed_ms": 6960,
+      "gb_seconds": 13.92,
+      "max_memory_mb": 398.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 328,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 123232.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 664345.0,
+            "setup_time": 62301.0
+          },
+          "q12": {
+            "bytes_read": 72291150,
+            "connect_time": 122968.0,
+            "get_requests": 227,
+            "head_requests": 17,
+            "query_time": 1190865.0,
+            "setup_time": 102397.0
+          },
+          "q21": {
+            "bytes_read": 113134664,
+            "connect_time": 121397.0,
+            "get_requests": 480,
+            "head_requests": 19,
+            "query_time": 2165231.0,
+            "setup_time": 182636.0
+          },
+          "q3": {
+            "bytes_read": 70024577,
+            "connect_time": 124283.0,
+            "get_requests": 211,
+            "head_requests": 18,
+            "query_time": 985343.0,
+            "setup_time": 150573.0
+          },
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 121375.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 525418.0,
+            "setup_time": 66306.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 1,
+      "mode": "warm",
+      "sample": 3,
+      "memory_mb": 2048,
+      "cold_start": false,
+      "failure": false,
+      "execution_us": 7422450,
+      "initialization_us": 0,
+      "client_us": 7464521,
+      "billed_ms": 7423,
+      "gb_seconds": 14.846,
+      "max_memory_mb": 398.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 328,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 120993.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 678001.0,
+            "setup_time": 77988.0
+          },
+          "q12": {
+            "bytes_read": 72297992,
+            "connect_time": 123340.0,
+            "get_requests": 226,
+            "head_requests": 17,
+            "query_time": 1246815.0,
+            "setup_time": 124843.0
+          },
+          "q21": {
+            "bytes_read": 114263453,
+            "connect_time": 119436.0,
+            "get_requests": 478,
+            "head_requests": 19,
+            "query_time": 2297530.0,
+            "setup_time": 211640.0
+          },
+          "q3": {
+            "bytes_read": 69335193,
+            "connect_time": 122109.0,
+            "get_requests": 213,
+            "head_requests": 18,
+            "query_time": 1102784.0,
+            "setup_time": 172285.0
+          },
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 118038.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 584082.0,
+            "setup_time": 72720.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 1,
+      "mode": "warm",
+      "sample": 4,
+      "memory_mb": 2048,
+      "cold_start": false,
+      "failure": false,
+      "execution_us": 6835660,
+      "initialization_us": 0,
+      "client_us": 8138158,
+      "billed_ms": 6836,
+      "gb_seconds": 13.672,
+      "max_memory_mb": 398.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 328,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 127753.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 650364.0,
+            "setup_time": 70957.0
+          },
+          "q12": {
+            "bytes_read": 61590942,
+            "connect_time": 123324.0,
+            "get_requests": 233,
+            "head_requests": 17,
+            "query_time": 1112661.0,
+            "setup_time": 99246.0
+          },
+          "q21": {
+            "bytes_read": 112990473,
+            "connect_time": 121010.0,
+            "get_requests": 480,
+            "head_requests": 19,
+            "query_time": 2170246.0,
+            "setup_time": 160897.0
+          },
+          "q3": {
+            "bytes_read": 69335193,
+            "connect_time": 121883.0,
+            "get_requests": 213,
+            "head_requests": 18,
+            "query_time": 953274.0,
+            "setup_time": 135186.0
+          },
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 122890.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 557869.0,
+            "setup_time": 55550.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 1,
+      "mode": "warm",
+      "sample": 5,
+      "memory_mb": 2048,
+      "cold_start": false,
+      "failure": false,
+      "execution_us": 7373240,
+      "initialization_us": 0,
+      "client_us": 7382006,
+      "billed_ms": 7374,
+      "gb_seconds": 14.748,
+      "max_memory_mb": 398.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 328,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 121246.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 667289.0,
+            "setup_time": 75025.0
+          },
+          "q12": {
+            "bytes_read": 59903145,
+            "connect_time": 122384.0,
+            "get_requests": 229,
+            "head_requests": 17,
+            "query_time": 1201025.0,
+            "setup_time": 108116.0
+          },
+          "q21": {
+            "bytes_read": 113699158,
+            "connect_time": 118881.0,
+            "get_requests": 479,
+            "head_requests": 19,
+            "query_time": 2413959.0,
+            "setup_time": 163925.0
+          },
+          "q3": {
+            "bytes_read": 69335193,
+            "connect_time": 119948.0,
+            "get_requests": 213,
+            "head_requests": 18,
+            "query_time": 1094722.0,
+            "setup_time": 174679.0
+          },
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 118436.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 550063.0,
+            "setup_time": 65384.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 10,
+      "mode": "cold",
+      "sample": 1,
+      "memory_mb": 2048,
+      "cold_start": true,
+      "failure": false,
+      "execution_us": 106102260,
+      "initialization_us": 89980,
+      "client_us": 106780771,
+      "billed_ms": 106193,
+      "gb_seconds": 212.386,
+      "max_memory_mb": 1477.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 1406,
+        "queries": {
+          "q1": {
+            "bytes_read": 537006518,
+            "connect_time": 2903009.0,
+            "get_requests": 524,
+            "head_requests": 33,
+            "query_time": 4865474.0,
+            "setup_time": 120901.0
+          },
+          "q12": {
+            "bytes_read": 1663390998,
+            "connect_time": 127158.0,
+            "get_requests": 1649,
+            "head_requests": 42,
+            "query_time": 22333992.0,
+            "setup_time": 138798.0
+          },
+          "q21": {
+            "bytes_read": 3571994848,
+            "connect_time": 133548.0,
+            "get_requests": 2840,
+            "head_requests": 44,
+            "query_time": 47309260.0,
+            "setup_time": 258393.0
+          },
+          "q3": {
+            "bytes_read": 1497152962,
+            "connect_time": 127288.0,
+            "get_requests": 1320,
+            "head_requests": 44,
+            "query_time": 19676475.0,
+            "setup_time": 201597.0
+          },
+          "q6": {
+            "bytes_read": 535931185,
+            "connect_time": 120096.0,
+            "get_requests": 534,
+            "head_requests": 33,
+            "query_time": 6586076.0,
+            "setup_time": 78442.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 10,
+      "mode": "cold",
+      "sample": 2,
+      "memory_mb": 2048,
+      "cold_start": true,
+      "failure": false,
+      "execution_us": 104529990,
+      "initialization_us": 108490,
+      "client_us": 105375384,
+      "billed_ms": 104639,
+      "gb_seconds": 209.278,
+      "max_memory_mb": 1477.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 1405,
+        "queries": {
+          "q1": {
+            "bytes_read": 537006518,
+            "connect_time": 2007443.0,
+            "get_requests": 524,
+            "head_requests": 33,
+            "query_time": 5405800.0,
+            "setup_time": 85417.0
+          },
+          "q12": {
+            "bytes_read": 1669087299,
+            "connect_time": 126917.0,
+            "get_requests": 1648,
+            "head_requests": 42,
+            "query_time": 22126373.0,
+            "setup_time": 118777.0
+          },
+          "q21": {
+            "bytes_read": 3564533917,
+            "connect_time": 129805.0,
+            "get_requests": 2843,
+            "head_requests": 44,
+            "query_time": 46728270.0,
+            "setup_time": 278217.0
+          },
+          "q3": {
+            "bytes_read": 1478671115,
+            "connect_time": 128007.0,
+            "get_requests": 1316,
+            "head_requests": 44,
+            "query_time": 18930474.0,
+            "setup_time": 201643.0
+          },
+          "q6": {
+            "bytes_read": 535931328,
+            "connect_time": 124406.0,
+            "get_requests": 534,
+            "head_requests": 33,
+            "query_time": 6932664.0,
+            "setup_time": 74053.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 10,
+      "mode": "cold",
+      "sample": 3,
+      "memory_mb": 2048,
+      "cold_start": true,
+      "failure": false,
+      "execution_us": 104495070,
+      "initialization_us": 73730,
+      "client_us": 105176492,
+      "billed_ms": 104569,
+      "gb_seconds": 209.138,
+      "max_memory_mb": 1485.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 1413,
+        "queries": {
+          "q1": {
+            "bytes_read": 537006518,
+            "connect_time": 2007977.0,
+            "get_requests": 524,
+            "head_requests": 33,
+            "query_time": 6049893.0,
+            "setup_time": 79515.0
+          },
+          "q12": {
+            "bytes_read": 1667540800,
+            "connect_time": 156445.0,
+            "get_requests": 1649,
+            "head_requests": 42,
+            "query_time": 22089261.0,
+            "setup_time": 107589.0
+          },
+          "q21": {
+            "bytes_read": 3562800535,
+            "connect_time": 160058.0,
+            "get_requests": 2844,
+            "head_requests": 44,
+            "query_time": 46872320.0,
+            "setup_time": 255252.0
+          },
+          "q3": {
+            "bytes_read": 1481358134,
+            "connect_time": 171732.0,
+            "get_requests": 1314,
+            "head_requests": 44,
+            "query_time": 18156972.0,
+            "setup_time": 181678.0
+          },
+          "q6": {
+            "bytes_read": 536038567,
+            "connect_time": 159340.0,
+            "get_requests": 533,
+            "head_requests": 33,
+            "query_time": 6877255.0,
+            "setup_time": 64365.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 10,
+      "mode": "cold",
+      "sample": 4,
+      "memory_mb": 2048,
+      "cold_start": true,
+      "failure": false,
+      "execution_us": 104727320,
+      "initialization_us": 86980,
+      "client_us": 105540423,
+      "billed_ms": 104815,
+      "gb_seconds": 209.63,
+      "max_memory_mb": 1485.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 1414,
+        "queries": {
+          "q1": {
+            "bytes_read": 537006518,
+            "connect_time": 2329907.0,
+            "get_requests": 524,
+            "head_requests": 33,
+            "query_time": 4814958.0,
+            "setup_time": 92749.0
+          },
+          "q12": {
+            "bytes_read": 1666941852,
+            "connect_time": 116689.0,
+            "get_requests": 1649,
+            "head_requests": 42,
+            "query_time": 21230464.0,
+            "setup_time": 116864.0
+          },
+          "q21": {
+            "bytes_read": 3554837051,
+            "connect_time": 123709.0,
+            "get_requests": 2846,
+            "head_requests": 44,
+            "query_time": 47231719.0,
+            "setup_time": 252789.0
+          },
+          "q3": {
+            "bytes_read": 1507410992,
+            "connect_time": 126421.0,
+            "get_requests": 1325,
+            "head_requests": 44,
+            "query_time": 20047245.0,
+            "setup_time": 173756.0
+          },
+          "q6": {
+            "bytes_read": 535823835,
+            "connect_time": 118654.0,
+            "get_requests": 535,
+            "head_requests": 33,
+            "query_time": 6775524.0,
+            "setup_time": 71228.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 10,
+      "mode": "cold",
+      "sample": 5,
+      "memory_mb": 2048,
+      "cold_start": true,
+      "failure": false,
+      "execution_us": 105717360,
+      "initialization_us": 84470,
+      "client_us": 106473233,
+      "billed_ms": 105802,
+      "gb_seconds": 211.604,
+      "max_memory_mb": 1482.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 1410,
+        "queries": {
+          "q1": {
+            "bytes_read": 537006518,
+            "connect_time": 2529097.0,
+            "get_requests": 524,
+            "head_requests": 33,
+            "query_time": 4784545.0,
+            "setup_time": 79825.0
+          },
+          "q12": {
+            "bytes_read": 1661277041,
+            "connect_time": 124043.0,
+            "get_requests": 1649,
+            "head_requests": 42,
+            "query_time": 22192751.0,
+            "setup_time": 103860.0
+          },
+          "q21": {
+            "bytes_read": 3561268359,
+            "connect_time": 117314.0,
+            "get_requests": 2841,
+            "head_requests": 44,
+            "query_time": 47548051.0,
+            "setup_time": 272350.0
+          },
+          "q3": {
+            "bytes_read": 1481456239,
+            "connect_time": 121697.0,
+            "get_requests": 1314,
+            "head_requests": 44,
+            "query_time": 19339157.0,
+            "setup_time": 217414.0
+          },
+          "q6": {
+            "bytes_read": 535931381,
+            "connect_time": 118707.0,
+            "get_requests": 534,
+            "head_requests": 33,
+            "query_time": 6969877.0,
+            "setup_time": 78922.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 10,
+      "mode": "warm",
+      "sample": 1,
+      "memory_mb": 2048,
+      "cold_start": false,
+      "failure": false,
+      "execution_us": 101926290,
+      "initialization_us": 0,
+      "client_us": 102228698,
+      "billed_ms": 101927,
+      "gb_seconds": 203.854,
+      "max_memory_mb": 1488.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 1416,
+        "queries": {
+          "q1": {
+            "bytes_read": 537006518,
+            "connect_time": 120725.0,
+            "get_requests": 524,
+            "head_requests": 33,
+            "query_time": 5564068.0,
+            "setup_time": 71439.0
+          },
+          "q12": {
+            "bytes_read": 1663956481,
+            "connect_time": 126082.0,
+            "get_requests": 1650,
+            "head_requests": 42,
+            "query_time": 21864614.0,
+            "setup_time": 109781.0
+          },
+          "q21": {
+            "bytes_read": 3566875385,
+            "connect_time": 120195.0,
+            "get_requests": 2841,
+            "head_requests": 44,
+            "query_time": 47061002.0,
+            "setup_time": 258937.0
+          },
+          "q3": {
+            "bytes_read": 1478930795,
+            "connect_time": 121566.0,
+            "get_requests": 1316,
+            "head_requests": 44,
+            "query_time": 18933465.0,
+            "setup_time": 224614.0
+          },
+          "q6": {
+            "bytes_read": 535930042,
+            "connect_time": 127022.0,
+            "get_requests": 534,
+            "head_requests": 33,
+            "query_time": 6625192.0,
+            "setup_time": 63930.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 10,
+      "mode": "warm",
+      "sample": 2,
+      "memory_mb": 2048,
+      "cold_start": false,
+      "failure": false,
+      "execution_us": 101883320,
+      "initialization_us": 0,
+      "client_us": 102266374,
+      "billed_ms": 101884,
+      "gb_seconds": 203.768,
+      "max_memory_mb": 1488.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 1416,
+        "queries": {
+          "q1": {
+            "bytes_read": 537006518,
+            "connect_time": 123150.0,
+            "get_requests": 524,
+            "head_requests": 33,
+            "query_time": 5705341.0,
+            "setup_time": 85792.0
+          },
+          "q12": {
+            "bytes_read": 1673293192,
+            "connect_time": 116702.0,
+            "get_requests": 1647,
+            "head_requests": 42,
+            "query_time": 21412826.0,
+            "setup_time": 123867.0
+          },
+          "q21": {
+            "bytes_read": 3563917374,
+            "connect_time": 122627.0,
+            "get_requests": 2844,
+            "head_requests": 44,
+            "query_time": 47157391.0,
+            "setup_time": 239631.0
+          },
+          "q3": {
+            "bytes_read": 1478931598,
+            "connect_time": 122941.0,
+            "get_requests": 1316,
+            "head_requests": 44,
+            "query_time": 18880844.0,
+            "setup_time": 200359.0
+          },
+          "q6": {
+            "bytes_read": 536038567,
+            "connect_time": 116793.0,
+            "get_requests": 533,
+            "head_requests": 33,
+            "query_time": 6888518.0,
+            "setup_time": 72852.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 10,
+      "mode": "warm",
+      "sample": 3,
+      "memory_mb": 2048,
+      "cold_start": false,
+      "failure": false,
+      "execution_us": 103316050,
+      "initialization_us": 0,
+      "client_us": 103505190,
+      "billed_ms": 103317,
+      "gb_seconds": 206.634,
+      "max_memory_mb": 1488.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 1416,
+        "queries": {
+          "q1": {
+            "bytes_read": 537006518,
+            "connect_time": 125341.0,
+            "get_requests": 524,
+            "head_requests": 33,
+            "query_time": 4989808.0,
+            "setup_time": 72870.0
+          },
+          "q12": {
+            "bytes_read": 1669679674,
+            "connect_time": 125328.0,
+            "get_requests": 1648,
+            "head_requests": 42,
+            "query_time": 22298111.0,
+            "setup_time": 110858.0
+          },
+          "q21": {
+            "bytes_read": 3575641452,
+            "connect_time": 123406.0,
+            "get_requests": 2834,
+            "head_requests": 44,
+            "query_time": 48217026.0,
+            "setup_time": 242845.0
+          },
+          "q3": {
+            "bytes_read": 1504919890,
+            "connect_time": 117800.0,
+            "get_requests": 1323,
+            "head_requests": 44,
+            "query_time": 19015204.0,
+            "setup_time": 216718.0
+          },
+          "q6": {
+            "bytes_read": 536038415,
+            "connect_time": 119219.0,
+            "get_requests": 533,
+            "head_requests": 33,
+            "query_time": 6915564.0,
+            "setup_time": 108265.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 10,
+      "mode": "warm",
+      "sample": 4,
+      "memory_mb": 2048,
+      "cold_start": false,
+      "failure": false,
+      "execution_us": 102143660,
+      "initialization_us": 0,
+      "client_us": 102436642,
+      "billed_ms": 102144,
+      "gb_seconds": 204.288,
+      "max_memory_mb": 1488.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 1416,
+        "queries": {
+          "q1": {
+            "bytes_read": 537006518,
+            "connect_time": 119062.0,
+            "get_requests": 524,
+            "head_requests": 33,
+            "query_time": 5573479.0,
+            "setup_time": 80614.0
+          },
+          "q12": {
+            "bytes_read": 1668127249,
+            "connect_time": 119851.0,
+            "get_requests": 1650,
+            "head_requests": 42,
+            "query_time": 21829201.0,
+            "setup_time": 116719.0
+          },
+          "q21": {
+            "bytes_read": 3564533298,
+            "connect_time": 121888.0,
+            "get_requests": 2843,
+            "head_requests": 44,
+            "query_time": 46537573.0,
+            "setup_time": 301052.0
+          },
+          "q3": {
+            "bytes_read": 1512201065,
+            "connect_time": 120196.0,
+            "get_requests": 1324,
+            "head_requests": 44,
+            "query_time": 19369021.0,
+            "setup_time": 214279.0
+          },
+          "q6": {
+            "bytes_read": 535609386,
+            "connect_time": 123722.0,
+            "get_requests": 537,
+            "head_requests": 33,
+            "query_time": 6920162.0,
+            "setup_time": 80627.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "scale_factor": 10,
+      "mode": "warm",
+      "sample": 5,
+      "memory_mb": 2048,
+      "cold_start": false,
+      "failure": false,
+      "execution_us": 102600470,
+      "initialization_us": 0,
+      "client_us": 102772888,
+      "billed_ms": 102601,
+      "gb_seconds": 205.202,
+      "max_memory_mb": 1486.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 1414,
+        "queries": {
+          "q1": {
+            "bytes_read": 537006518,
+            "connect_time": 124865.0,
+            "get_requests": 524,
+            "head_requests": 33,
+            "query_time": 5139050.0,
+            "setup_time": 81295.0
+          },
+          "q12": {
+            "bytes_read": 1664883091,
+            "connect_time": 125568.0,
+            "get_requests": 1648,
+            "head_requests": 42,
+            "query_time": 21701091.0,
+            "setup_time": 117481.0
+          },
+          "q21": {
+            "bytes_read": 3557295551,
+            "connect_time": 122729.0,
+            "get_requests": 2842,
+            "head_requests": 44,
+            "query_time": 48080764.0,
+            "setup_time": 249972.0
+          },
+          "q3": {
+            "bytes_read": 1493836479,
+            "connect_time": 114765.0,
+            "get_requests": 1318,
+            "head_requests": 44,
+            "query_time": 19220637.0,
+            "setup_time": 174178.0
+          },
+          "q6": {
+            "bytes_read": 536038567,
+            "connect_time": 125732.0,
+            "get_requests": 533,
+            "head_requests": 33,
+            "query_time": 6633097.0,
+            "setup_time": 65219.0
+          }
+        },
+        "threads": 2
+      }
+    }
+  ]
+}

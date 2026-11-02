@@ -17,6 +17,8 @@ import json
 from enum import Enum
 from typing import Dict, Optional  # noqa
 
+from botocore.config import Config
+
 from sebs.aws.aws import AWS
 from sebs.aws.config import FunctionURLAuthType
 from sebs.faas.function import ExecutionResult, Trigger
@@ -107,7 +109,17 @@ class LibraryTrigger(Trigger):
         self.logging.debug(f"Invoke function {self.name}")
 
         serialized_payload = json.dumps(payload).encode("utf-8")
-        client = self.deployment_client.get_lambda_client()
+        # Cover standard Lambda's 900-second maximum plus response overhead. Do not
+        # retry a timed-out request: the original invocation may still be running.
+        client = self.deployment_client.session.client(
+            "lambda",
+            region_name=self.deployment_client.config.region,
+            config=Config(
+                connect_timeout=10,
+                read_timeout=960,
+                retries={"total_max_attempts": 1},
+            ),
+        )
         begin = datetime.datetime.now()
         ret = client.invoke(FunctionName=self.name, Payload=serialized_payload, LogType="Tail")
         end = datetime.datetime.now()
