@@ -1,6 +1,6 @@
 # Run the SQL benchmark on AWS
 
-These instructions use SeBS's standard deployment and experiment commands for `710.sql-query`. Tested: Python 3.12, x64, DuckDB 2.0.0, `us-east-1`, and `httpfs`. Each invocation runs Q1, Q3, Q6, Q12, and Q21 sequentially. Parallel cloud execution is not implemented.
+These instructions use SeBS's standard deployment and experiment commands for `710.sql-query`. Tested: Python 3.12, x64, DuckDB 2.0.0, `us-east-1`, and `httpfs`. By default, each invocation runs Q1, Q3, Q6, Q12, and Q21 sequentially. For one query per request, use the [single-query configuration](../benchmarks/700.analytics/710.sql-query/README.md#one-query-per-invocation). Parallel cloud execution is not implemented.
 
 ## 1. Prerequisites and checkout
 

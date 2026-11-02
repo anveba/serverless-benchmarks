@@ -15,7 +15,7 @@ For setup from zero, deployment commands, validation, metrics, troubleshooting, 
 - Collected five cold and five warm HTTP samples each at SF1 and SF10, at 2048 MB; matched AWS metrics for all 20 samples.
 - Fixed the SeBS SDK invocation timeout and disabled automatic invocation retries. Benchmark SQL was unchanged. Portable configs are in `configs/sql-aws*.example.json`.
 
-Each invocation runs all five queries sequentially. These results are not parallel query execution.
+The recorded experiments ran all five queries sequentially per invocation. A new optional single-query config is now available; it has offline coverage but has not been deployed on AWS. These results are not parallel query execution.
 
 ## Measurements
 
@@ -65,11 +65,65 @@ These characterize the fixed five-query bundle, not individual-query service lat
 - Cleanup has not been run. The function, public URL, S3 data, and role may remain. Follow the setup guide's dry-run and cleanup steps when finished.
 - Temporary disk is still Lambda's default; larger inputs/spills need separate validation. SF10 ran successfully; AWS SF30/SF100 runs were not performed.
 
+## Individual-query Lambda milestone
+
+**Lambda request-stream path verified on AWS; next step is the persistent EC2/DuckDB baseline.**
+
+One deployed function supports five query IDs. Each request in this experiment
+selects one ID and executes one complete query. Reused warm environments and
+additional environments for overlapping requests are managed by AWS. The client
+limit of two in-flight requests is not an AWS concurrency limit.
+
+The `sql-workload` experiment is integrated with SeBS deployment and metrics
+processing. Follow [the request-stream guide](../docs/sql-aws-workload.md) and copy
+`configs/sql-aws-workload.example.json`. Optional query selection for ordinary
+invocations uses `configs/sql-aws-single-query.example.json` and is preserved in
+experiment metadata. The original five-query default remains available.
+
+Verified SF1 smoke test: ten arrivals at offsets 0, 2, …, 18 seconds, query order
+Q6/Q1/Q12/Q3/Q21 repeated twice, 2048 MB, Python 3.12/x64, SDK invocation, and at
+most two simultaneous client invocations. All ten answers validated and provider
+metrics matched ten of ten requests. Two requests were cold. Total billed Lambda
+compute was **48.166 GB-seconds**, excluding request/S3/transfer charges.
+
+| Request | Query | Cold | Client queue, s | Arrival-to-result, s | AWS execution, s |
+|---:|---|---|---:|---:|---:|
+| 0 | Q6 | Yes | 0.000 | 5.376 | 4.595 |
+| 1 | Q1 | Yes | 0.001 | 5.056 | 4.447 |
+| 2 | Q12 | No | 1.377 | 3.495 | 1.822 |
+| 3 | Q3 | No | 1.057 | 2.875 | 1.514 |
+| 4 | Q21 | No | 0.000 | 3.334 | 3.046 |
+| 5 | Q6 | No | 0.000 | 1.124 | 0.768 |
+| 6 | Q1 | No | 0.000 | 1.308 | 0.988 |
+| 7 | Q12 | No | 0.000 | 2.469 | 2.166 |
+| 8 | Q3 | No | 0.000 | 1.882 | 1.566 |
+| 9 | Q21 | No | 0.000 | 3.306 | 2.999 |
+
+[Sanitized workload samples](results/aws-sf1-workload.json) preserve the exact trace,
+per-request timings, correctness, and provider billing without account, endpoint,
+object-path, or request identifiers. Original raw files remain local under
+`results/sql-aws-workload-01/sql-workload/`.
+
+Q12/Q3 waited on the client because the first two requests occupied both slots.
+Cold Q6/Q1 were slower than their warm repeats, but there is only one cold/warm
+pair each. This is a functional smoke test, not statistical evidence that Lambda
+beats another service. The configured resource update before replay can affect
+the first requests' cold-start behavior. Validation occurs after replay; it is
+excluded from measured request latency. No automatic warm-up or retries are used.
+
+The SDK timeout fix is also exercised by the request runner. Existing query
+selection, SDK timeout, and new workload tests pass offline. No EC2/Athena adapter
+or distributed AWS query execution was added.
+
 ## Next work
 
-1. Expose one query ID per request through SeBS input/experiment configuration. The handler accepts a query list, but the generator currently selects all five.
-2. Add a reproducible individual-query request stream, then persistent EC2/DuckDB and Athena baselines using identical files, SQL, and schedules. Include EC2 idle costs. Independent request concurrency is separate from splitting one query across workers.
-3. Integrate parallel orchestration with SeBS experiments/workflows and port it to AWS. The existing Q1/Q6/Q12 coordinator is local-only and leaves intermediate objects behind.
-4. Fix input-size caching and validate other providers. Direct `httpfs` access currently supports S3-compatible storage; other backends use download mode.
-
-No EC2/Athena baseline, AWS parallel run, or other-provider test has been completed.
+1. Implement a persistent EC2/DuckDB service accepting the same query IDs and
+   reading identical S3 files with DuckDB 2.0.0. Validate each query, then replay
+   the identical schedule through an adapter to the shared runner.
+2. Add an Athena adapter. Match SQL semantics and complete-result retrieval.
+3. Define longer repeated traces for sparse, sustained, and bursty traffic;
+   record cache/result-reuse policy, driver placement, resource configurations,
+   queueing, errors, and the full cost observation window, including EC2 idle time.
+4. Treat splitting one query across functions as separate future work. The
+   existing parallel Q1/Q6/Q12 coordinator remains local-only.
+5. Fix input-size caching and validate restricted-IAM deployment and other providers.

@@ -74,3 +74,47 @@ Each invocation runs all five queries; independent query-arrival workloads are n
 Use `configs/sql-aws.example.json` as a template and follow [the AWS setup guide](../../../docs/sql-aws-setup.md).
 When changing input size, pass `--update-storage`: the current storage cache does not track sizes.
 Parallel AWS execution and the EC2/Athena baselines are not implemented.
+
+## One query per invocation
+
+Copy `configs/sql-aws-single-query.example.json` to a local config and set the
+execution role if required. Query selection is in the SeBS experiment config:
+
+```json
+"benchmark-inputs": {
+  "710.sql-query": {"queries": ["q6"]}
+}
+```
+
+Place this object inside `experiments`. Supported IDs: `q1`, `q3`, `q6`, `q12`,
+`q21`. One ID means one complete query per invocation. Multiple IDs retain the
+sequential bundle behavior; omitting the setting runs all five as before.
+Empty lists, duplicates, unsupported IDs, and unknown parameters are rejected
+before SQL dataset generation/upload. Selection is saved in experiment metadata.
+
+```bash
+cp configs/sql-aws-single-query.example.json configs/sql-aws-single-query.json
+sebs benchmark invoke 710.sql-query small \
+  --config configs/sql-aws-single-query.json --deployment aws \
+  --memory 2048 --trigger library --repetitions 1 --validate \
+  --cache cache-sql-aws --output-dir results/sql-aws-q6-check --verbose
+```
+
+This uses the same SF1 files. Query selection alone does not require reuploading;
+add `--update-storage` if this size has not been uploaded or when changing sizes.
+Change `queries` to another single ID and use a fresh output directory to validate
+each query individually. `--validate` checks only the selected answers. After
+validation, `sebs experiment invoke perf-cost` with this config measures the same
+selected query; the example collects five cold and five warm samples at 2048 MB.
+`perf-cost` does not independently validate answers.
+
+This enables isolated-query measurements. For mixed arrivals, use the
+[SQL workload experiment](../../../docs/sql-aws-workload.md). EC2/Athena adapters
+are not implemented yet. Increasing `concurrent-invocations`
+submits independent executions of the selected query; it does not split a query.
+
+The AWS mixed-query smoke test completed ten individual requests with validated
+answers and provider metrics for all ten. The example's two-slot client limit
+allows overlapping invocations of the same deployed function; it does not split
+queries or limit the function to two total requests. Measurements and limitations
+are recorded in the [AWS handoff](../../../handoff/AWS_HANDOFF.md#individual-query-lambda-milestone).

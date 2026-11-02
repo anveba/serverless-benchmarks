@@ -95,9 +95,30 @@ def _parquet_files(name, params):
 """
 
 
+def _selected_queries(parameters):
+    """Validate query selection before generating or uploading any data."""
+    if parameters is None:
+        parameters = {}
+    if not isinstance(parameters, dict):
+        raise ValueError("SQL input parameters must be an object")
+    unknown = set(parameters) - {"queries"}
+    if unknown:
+        raise ValueError(f"Unknown SQL input parameters: {sorted(unknown)}")
+    selected = parameters.get("queries", list(QUERIES))
+    if not isinstance(selected, list) or not selected:
+        raise ValueError("queries must be a non-empty list of query IDs")
+    if any(not isinstance(query, str) or query not in QUERIES for query in selected):
+        raise ValueError(f"Supported query IDs: {', '.join(QUERIES)}")
+    if len(set(selected)) != len(selected):
+        raise ValueError("queries must not contain duplicate IDs")
+    return list(selected)
+
+
 def generate_input(
-    data_dir, size, benchmarks_bucket, input_paths, output_paths, upload_func, nosql_func
+    data_dir, size, benchmarks_bucket, input_paths, output_paths, upload_func, nosql_func,
+    parameters=None,
 ):
+    selected_queries = _selected_queries(parameters)
     name, params = _workload(size)
     tables = {}
     for table, files in _parquet_files(name, params).items():
@@ -115,7 +136,7 @@ def generate_input(
         },
         "scale_factor": params["scale_factor"],
         "access_mode": "httpfs",
-        "queries": list(QUERIES),
+        "queries": selected_queries,
         "tables": tables,
     }
 

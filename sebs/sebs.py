@@ -308,6 +308,7 @@ class SeBS(LoggingBase):
         from sebs.experiments import (
             Experiment,
             PerfCost,
+            SqlWorkload,
             NetworkPingPong,
             InvocationOverhead,
             EvictionModel,
@@ -316,6 +317,7 @@ class SeBS(LoggingBase):
         # Map of supported experiment types to their implementations
         implementations: Dict[str, Type[Experiment]] = {
             "perf-cost": PerfCost,
+            "sql-workload": SqlWorkload,
             "network-ping-pong": NetworkPingPong,
             "invocation-overhead": InvocationOverhead,
             "eviction-model": EvictionModel,

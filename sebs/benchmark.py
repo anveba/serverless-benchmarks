@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import glob
 import hashlib
+import inspect
 import json
 import subprocess
 import os
@@ -1608,6 +1609,16 @@ class Benchmark(LoggingBase):
         Returns:
             Dict[str, str]: Input configuration for the benchmark function
         """
+        parameters = self._experiment_config.benchmark_input(self.benchmark)
+        input_kwargs = {}
+        if parameters:
+            generator = self._benchmark_input_module.generate_input
+            if "parameters" not in inspect.signature(generator).parameters:
+                raise ValueError(
+                    f"Benchmark {self.benchmark} does not support benchmark-inputs parameters"
+                )
+            input_kwargs["parameters"] = parameters
+
         if hasattr(self._benchmark_input_module, "buckets_count"):
             buckets = self._benchmark_input_module.buckets_count()
             storage = system_resources.get_storage(replace_existing)
@@ -1656,6 +1667,7 @@ class Benchmark(LoggingBase):
             output,
             storage_func,
             nosql_func,
+            **input_kwargs,
         )
 
         # Cache only once we data is in the cloud.
@@ -1859,6 +1871,7 @@ class BenchmarkModuleInterface:
         nosql_func: Optional[
             Callable[[str, str, dict, Tuple[str, str], Optional[Tuple[str, str]]], None]
         ],
+        parameters: Optional[dict] = None,
     ) -> Dict[str, str]:
         """Generate benchmark input data and configuration.
 

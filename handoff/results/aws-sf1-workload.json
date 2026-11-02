@@ -1,0 +1,425 @@
+{
+  "run_date_utc": "2026-11-02",
+  "region": "us-east-1",
+  "python": "3.12",
+  "architecture": "x64",
+  "duckdb": "2.0.0",
+  "scale_factor": 1,
+  "memory_mb": 2048,
+  "trigger": "library",
+  "max_in_flight": 2,
+  "arrival_trace": [
+    {
+      "at": 0,
+      "query": "q6"
+    },
+    {
+      "at": 2,
+      "query": "q1"
+    },
+    {
+      "at": 4,
+      "query": "q12"
+    },
+    {
+      "at": 6,
+      "query": "q3"
+    },
+    {
+      "at": 8,
+      "query": "q21"
+    },
+    {
+      "at": 10,
+      "query": "q6"
+    },
+    {
+      "at": 12,
+      "query": "q1"
+    },
+    {
+      "at": 14,
+      "query": "q12"
+    },
+    {
+      "at": 16,
+      "query": "q3"
+    },
+    {
+      "at": 18,
+      "query": "q21"
+    }
+  ],
+  "warmup": false,
+  "validation_in_timing": false,
+  "cache_policy": "new DuckDB connection per query; external file cache disabled",
+  "summary": {
+    "requests": 10,
+    "valid": 10,
+    "failures": 0,
+    "cold_starts": 2,
+    "billed_gb_seconds": 48.166
+  },
+  "samples": [
+    {
+      "index": 0,
+      "query": "q6",
+      "scheduled_s": 0,
+      "started_s": 0.00029624899980262853,
+      "queue_delay_s": 0.00029624899980262853,
+      "completed_s": 5.375814550001451,
+      "service_latency_s": 5.375518301001648,
+      "total_latency_s": 5.375814550001451,
+      "valid": true,
+      "failure": false,
+      "outcome": "response",
+      "cold_start": true,
+      "execution_us": 4594750,
+      "initialization_us": 85190,
+      "billed_ms": 4680,
+      "gb_seconds": 9.36,
+      "memory_mb": 2048,
+      "max_memory_mb": 224.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 154,
+        "queries": {
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 2329509.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 1522018.0,
+            "setup_time": 76394.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "index": 1,
+      "query": "q1",
+      "scheduled_s": 2,
+      "started_s": 2.000564703999771,
+      "queue_delay_s": 0.0005647039997711545,
+      "completed_s": 7.056302328001038,
+      "service_latency_s": 5.055737624001267,
+      "total_latency_s": 5.056302328001038,
+      "valid": true,
+      "failure": false,
+      "outcome": "response",
+      "cold_start": true,
+      "execution_us": 4447260,
+      "initialization_us": 83530,
+      "billed_ms": 4531,
+      "gb_seconds": 9.062,
+      "memory_mb": 2048,
+      "max_memory_mb": 230.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 161,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 2992192.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 748593.0,
+            "setup_time": 76614.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "index": 2,
+      "query": "q12",
+      "scheduled_s": 4,
+      "started_s": 5.376879827999801,
+      "queue_delay_s": 1.376879827999801,
+      "completed_s": 7.4946315360011795,
+      "service_latency_s": 2.1177517080013786,
+      "total_latency_s": 3.4946315360011795,
+      "valid": true,
+      "failure": false,
+      "outcome": "response",
+      "cold_start": false,
+      "execution_us": 1821820,
+      "initialization_us": 0,
+      "billed_ms": 1822,
+      "gb_seconds": 3.644,
+      "memory_mb": 2048,
+      "max_memory_mb": 238.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 169,
+        "queries": {
+          "q12": {
+            "bytes_read": 77637626,
+            "connect_time": 124019.0,
+            "get_requests": 224,
+            "head_requests": 17,
+            "query_time": 1484116.0,
+            "setup_time": 164579.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "index": 3,
+      "query": "q3",
+      "scheduled_s": 6,
+      "started_s": 7.057304829000714,
+      "queue_delay_s": 1.0573048290007137,
+      "completed_s": 8.875332823999997,
+      "service_latency_s": 1.8180279949992837,
+      "total_latency_s": 2.8753328239999973,
+      "valid": true,
+      "failure": false,
+      "outcome": "response",
+      "cold_start": false,
+      "execution_us": 1513840,
+      "initialization_us": 0,
+      "billed_ms": 1514,
+      "gb_seconds": 3.028,
+      "memory_mb": 2048,
+      "max_memory_mb": 249.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 180,
+        "queries": {
+          "q3": {
+            "bytes_read": 69335193,
+            "connect_time": 126415.0,
+            "get_requests": 213,
+            "head_requests": 18,
+            "query_time": 1120521.0,
+            "setup_time": 216545.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "index": 4,
+      "query": "q21",
+      "scheduled_s": 8,
+      "started_s": 8.000164939001479,
+      "queue_delay_s": 0.0001649390014790697,
+      "completed_s": 11.333701339000982,
+      "service_latency_s": 3.3335363999995025,
+      "total_latency_s": 3.3337013390009815,
+      "valid": true,
+      "failure": false,
+      "outcome": "response",
+      "cold_start": false,
+      "execution_us": 3046390,
+      "initialization_us": 0,
+      "billed_ms": 3047,
+      "gb_seconds": 6.094,
+      "memory_mb": 2048,
+      "max_memory_mb": 393.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 323,
+        "queries": {
+          "q21": {
+            "bytes_read": 113699158,
+            "connect_time": 125567.0,
+            "get_requests": 479,
+            "head_requests": 19,
+            "query_time": 2557593.0,
+            "setup_time": 290801.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "index": 5,
+      "query": "q6",
+      "scheduled_s": 10,
+      "started_s": 10.000292987000648,
+      "queue_delay_s": 0.00029298700064828154,
+      "completed_s": 11.124002081000071,
+      "service_latency_s": 1.1237090939994232,
+      "total_latency_s": 1.1240020810000715,
+      "valid": true,
+      "failure": false,
+      "outcome": "response",
+      "cold_start": false,
+      "execution_us": 767990,
+      "initialization_us": 0,
+      "billed_ms": 768,
+      "gb_seconds": 1.536,
+      "memory_mb": 2048,
+      "max_memory_mb": 249.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 180,
+        "queries": {
+          "q6": {
+            "bytes_read": 48468884,
+            "connect_time": 125096.0,
+            "get_requests": 111,
+            "head_requests": 13,
+            "query_time": 533711.0,
+            "setup_time": 64893.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "index": 6,
+      "query": "q1",
+      "scheduled_s": 12,
+      "started_s": 12.000221837000936,
+      "queue_delay_s": 0.00022183700093592051,
+      "completed_s": 13.308190947000185,
+      "service_latency_s": 1.3079691099992488,
+      "total_latency_s": 1.3081909470001847,
+      "valid": true,
+      "failure": false,
+      "outcome": "response",
+      "cold_start": false,
+      "execution_us": 987990,
+      "initialization_us": 0,
+      "billed_ms": 988,
+      "gb_seconds": 1.976,
+      "memory_mb": 2048,
+      "max_memory_mb": 393.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 323,
+        "queries": {
+          "q1": {
+            "bytes_read": 53706173,
+            "connect_time": 118187.0,
+            "get_requests": 62,
+            "head_requests": 13,
+            "query_time": 740782.0,
+            "setup_time": 85081.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "index": 7,
+      "query": "q12",
+      "scheduled_s": 14,
+      "started_s": 14.000238780001382,
+      "queue_delay_s": 0.00023878000138211064,
+      "completed_s": 16.469198350001534,
+      "service_latency_s": 2.468959570000152,
+      "total_latency_s": 2.469198350001534,
+      "valid": true,
+      "failure": false,
+      "outcome": "response",
+      "cold_start": false,
+      "execution_us": 2165660,
+      "initialization_us": 0,
+      "billed_ms": 2166,
+      "gb_seconds": 4.332,
+      "memory_mb": 2048,
+      "max_memory_mb": 393.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 323,
+        "queries": {
+          "q12": {
+            "bytes_read": 91902184,
+            "connect_time": 122715.0,
+            "get_requests": 216,
+            "head_requests": 17,
+            "query_time": 1819927.0,
+            "setup_time": 173772.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "index": 8,
+      "query": "q3",
+      "scheduled_s": 16,
+      "started_s": 16.00017817400112,
+      "queue_delay_s": 0.00017817400112107862,
+      "completed_s": 17.881716777001202,
+      "service_latency_s": 1.881538603000081,
+      "total_latency_s": 1.881716777001202,
+      "valid": true,
+      "failure": false,
+      "outcome": "response",
+      "cold_start": false,
+      "execution_us": 1566430,
+      "initialization_us": 0,
+      "billed_ms": 1567,
+      "gb_seconds": 3.134,
+      "memory_mb": 2048,
+      "max_memory_mb": 251.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 182,
+        "queries": {
+          "q3": {
+            "bytes_read": 72798483,
+            "connect_time": 124029.0,
+            "get_requests": 208,
+            "head_requests": 18,
+            "query_time": 1210378.0,
+            "setup_time": 183414.0
+          }
+        },
+        "threads": 2
+      }
+    },
+    {
+      "index": 9,
+      "query": "q21",
+      "scheduled_s": 18,
+      "started_s": 18.00026320300094,
+      "queue_delay_s": 0.00026320300094084814,
+      "completed_s": 21.30583215400111,
+      "service_latency_s": 3.3055689510001685,
+      "total_latency_s": 3.3058321540011093,
+      "valid": true,
+      "failure": false,
+      "outcome": "response",
+      "cold_start": false,
+      "execution_us": 2999070,
+      "initialization_us": 0,
+      "billed_ms": 3000,
+      "gb_seconds": 6.0,
+      "memory_mb": 2048,
+      "max_memory_mb": 389.0,
+      "measurement": {
+        "access_mode": "httpfs",
+        "memory_limit_mb": 2048,
+        "peak_rss_mb": 319,
+        "queries": {
+          "q21": {
+            "bytes_read": 112990473,
+            "connect_time": 120800.0,
+            "get_requests": 480,
+            "head_requests": 19,
+            "query_time": 2623831.0,
+            "setup_time": 186393.0
+          }
+        },
+        "threads": 2
+      }
+    }
+  ]
+}

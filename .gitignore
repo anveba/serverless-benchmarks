@@ -199,3 +199,7 @@ cache
 /outputs/
 /configs/sql-aws-sf1-cold-warm.json
 /configs/sql-aws-sf10-cold-warm.json
+
+/configs/sql-aws-single-query.json
+
+/configs/sql-aws-workload.json

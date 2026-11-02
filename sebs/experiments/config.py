@@ -14,6 +14,7 @@ configurations, allowing them to be loaded from and saved to configuration files
 """
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Dict
 
 from sebs.faas.function import Runtime
@@ -99,6 +100,7 @@ class Config:
         self._architecture: str = "x64"
         self._flags: Dict[str, bool] = {}
         self._experiment_configs: Dict[str, dict] = {}
+        self._benchmark_inputs: Dict[str, dict] = {}
         self._runtime = Runtime(None, None)
 
     @property
@@ -165,6 +167,13 @@ class Config:
         """Get the selected deployment variant."""
         return self._system_variant
 
+    def benchmark_input(self, name: str) -> dict:
+        """Get optional input-generator parameters for a benchmark.
+
+        A copy prevents generators from modifying the recorded configuration.
+        """
+        return deepcopy(self._benchmark_inputs.get(name, {}))
+
     def experiment_settings(self, name: str) -> dict:
         """Get settings for a specific experiment.
 
@@ -198,6 +207,8 @@ class Config:
             "architecture": self._architecture,
             "system_variant": self._system_variant.serialize(),
         }
+        if self._benchmark_inputs:
+            out["benchmark-inputs"] = deepcopy(self._benchmark_inputs)
         return out
 
     # FIXME: 3.7+ python with future annotations
@@ -220,6 +231,13 @@ class Config:
             The string type annotation is a forward reference to the Config class.
         """
         cfg = Config()
+        benchmark_inputs = config.get("benchmark-inputs", {})
+        if not isinstance(benchmark_inputs, dict) or any(
+            not isinstance(name, str) or not isinstance(parameters, dict)
+            for name, parameters in benchmark_inputs.items()
+        ):
+            raise ValueError("benchmark-inputs must map benchmark names to parameter objects")
+        cfg._benchmark_inputs = deepcopy(benchmark_inputs)
         cfg._update_code = config["update_code"]
         cfg._update_storage = config["update_storage"]
         cfg._download_results = config["download_results"]
@@ -238,11 +256,14 @@ class Config:
             PerfCost,
             InvocationOverhead,
             EvictionModel,
+            SqlWorkload,
         )
 
         # Load experiment-specific settings if present
-        for exp in [NetworkPingPong, PerfCost, InvocationOverhead, EvictionModel]:
+        for exp in [NetworkPingPong, PerfCost, InvocationOverhead, EvictionModel, SqlWorkload]:
             if exp.name() in config:
                 cfg._experiment_configs[exp.name()] = config[exp.name()]
+            elif exp.name() in config.get("experiments", {}):
+                cfg._experiment_configs[exp.name()] = config["experiments"][exp.name()]
 
         return cfg
