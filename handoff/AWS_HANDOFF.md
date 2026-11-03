@@ -127,3 +127,15 @@ or distributed AWS query execution was added.
 4. Treat splitting one query across functions as separate future work. The
    existing parallel Q1/Q6/Q12 coordinator remains local-only.
 5. Fix input-size caching and validate restricted-IAM deployment and other providers.
+
+
+## EC2 comparison milestone (comparison branch)
+
+The moderate, burst and sparse SF1 workloads are complete: 1,600 valid answers,
+zero execution failures. Reproduction, scripts, settings, limitations, sanitized
+per-request results and cleanup commands are consolidated in the
+[SQL comparison runbook](../evaluation/sql/README.md). EC2 had lower latency at
+two concurrent requests; sparse Lambda measured-window compute was about 14.3x
+cheaper. Cost estimates exclude full setup/inter-run uptime and storage/network
+charges. Higher concurrency and Athena are next; neither has been measured.
+Cleanup commands are prepared; AWS termination/deletion is not yet verified.

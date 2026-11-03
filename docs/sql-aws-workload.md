@@ -70,9 +70,10 @@ Request records and invocation results are checkpointed as responses are collect
 An interrupted run may be incomplete; compare its request count with `trace.json`.
 Raw files contain account/resource details and should remain local.
 
-The runner is integrated with SeBS function deployment and processing. EC2/Athena
-adapters, a dollar-cost calculator, and a common baseline observation window are
-not implemented. This small trace is a smoke test, not a final benchmark design.
+The runner is integrated with SeBS function deployment and processing. The
+[comparison runbook](../evaluation/sql/README.md) documents the EC2 adapter, cloud
+driver, repeated workloads, recorded results, cost scope and cleanup on the
+comparison branch. Athena remains future work. This small trace is a smoke test.
 
 ## Verified Lambda smoke test
 
@@ -101,4 +102,4 @@ PYCODE
 
 Metrics must also be processed with all invocation IDs matched before reporting
 provider execution or compute cost. Keep the same input snapshot and arrival
-trace for the forthcoming EC2/Athena adapters.
+trace across the comparison adapters.
