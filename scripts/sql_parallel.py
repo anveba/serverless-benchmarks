@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
-"""Run a TPC-H query of 710.sql-query in parallel over several function instances.
+"""Run a 710.sql-query query in parallel over several local function instances.
 
-The script acts as the coordinator of a Starling-style execution: it plans the
-stages, assigns input files to workers, and invokes a stage only after the previous
-one has finished. Workers exchange intermediate data through object storage.
-
-Start the functions with `sebs local start 710.sql-query <size> <output> --deployments N`,
-and pass the output file here. Results are printed as JSON.
+Usage: sebs local start 710.sql-query <size> out.json --deployments N, then pass out.json.
 """
 
 import argparse
@@ -24,8 +19,6 @@ REQUEST_TIMEOUT = 900
 
 
 class Workers:
-    """Pool of function instances, where each instance processes one task at a time."""
-
     def __init__(self, urls: List[str], bucket: dict, access_mode: str):
         self.idle: queue.Queue = queue.Queue()
         for url in urls:
@@ -50,7 +43,6 @@ class Workers:
         return output
 
     def run_stage(self, name: str, tasks: List[dict]) -> List[dict]:
-        """Execute all tasks of a stage and record its measurements."""
         payloads = [
             {
                 "operation": "stage",
@@ -92,7 +84,6 @@ class Workers:
 
 
 def split_files(files: List[str], count: int) -> List[List[str]]:
-    """Assign files to at most `count` groups; a file is the unit of parallelism."""
     groups: List[List[str]] = [[] for _ in range(min(count, len(files)))]
     for idx, file in enumerate(files):
         groups[idx % len(groups)].append(file)
@@ -114,7 +105,6 @@ def run_merge(workers: Workers, query: str, partials: List[str]) -> List[list]:
 
 
 def run_scan_aggregate(workers: Workers, query: str, tables: dict, run_id: str) -> List[list]:
-    """Scan and aggregate groups of files, and merge the partial aggregates."""
     tasks = [
         {
             "stage": f"{query}.partial",
@@ -130,7 +120,6 @@ def run_scan_aggregate(workers: Workers, query: str, tables: dict, run_id: str) 
 def shuffle_table(
     workers: Workers, query: str, table: str, files: List[str], run_id: str, partitions: int
 ) -> Dict[str, List[str]]:
-    """Hash-partition a table on the join key, and return the objects of each partition."""
     tasks = [
         {
             "stage": f"{query}.partition_{table}",
@@ -154,11 +143,10 @@ def shuffle_table(
 def run_shuffle_join(
     workers: Workers, query: str, tables: dict, run_id: str, partitions: int
 ) -> List[list]:
-    """Partition both sides of the join, join each partition, and merge the results."""
     lineitem = shuffle_table(workers, query, "lineitem", tables["lineitem"], run_id, partitions)
     orders = shuffle_table(workers, query, "orders", tables["orders"], run_id, partitions)
 
-    # An inner join produces nothing for a partition that is empty on either side.
+    # skip partitions that are empty on either side
     tasks = [
         {
             "stage": f"{query}.join",

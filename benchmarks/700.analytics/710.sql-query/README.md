@@ -59,6 +59,14 @@ python scripts/sql_parallel.py deployment.json --query q12 --baseline
 The coordinator currently runs on the client and invokes local deployments.
 Intermediate objects are not removed after the query.
 
+## Request validation
+
+Function URLs can be public, and the function puts values from the request into SQL statements and
+storage requests. It therefore rejects requests with tables outside of a fixed list, unexpected
+characters in object keys and prefixes, buckets not named `sebs-benchmarks-*`, or invalid partition
+settings. This limits what a request can do, but it is not access control: anyone with the URL can
+still read and write benchmark buckets and spend money. Remove public URLs after running experiments.
+
 ## Local resource limits
 
 `sebs local start --memory` limits containers to the given memory without swap, with CPU
@@ -72,7 +80,8 @@ Single-function execution was validated on AWS with Python 3.12/x64 at SF0.01 an
 SF10 execution and controlled cold/warm measurements at SF1/SF10 also completed.
 Each invocation runs all five queries; independent query-arrival workloads are not implemented.
 Use `configs/sql-aws.example.json` as a template and follow [the AWS setup guide](../../../docs/sql-aws-setup.md).
-When changing input size, pass `--update-storage`: the current storage cache does not track sizes.
+The storage cache now tracks uploaded input sizes, so changing size no longer needs `--update-storage`.
+This fix was tested with a stand-in for the provider, and has not run against S3 yet.
 Parallel AWS execution and the EC2/Athena baselines are not implemented.
 
 ## One query per invocation

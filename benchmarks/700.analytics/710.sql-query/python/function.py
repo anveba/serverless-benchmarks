@@ -4,6 +4,7 @@ import decimal
 import json
 import math
 import os
+import re
 import resource
 import shutil
 import tempfile
@@ -14,10 +15,36 @@ from . import queries
 from . import storage
 client = storage.storage.get_instance()
 
-# Bundled by package.sh next to the duckdb package, wherever a platform places dependencies.
+# extensions are bundled by package.sh
 EXTENSION_DIR = os.path.join(os.path.dirname(os.path.dirname(duckdb.__file__)), 'duckdb_extensions')
-# DuckDB also needs memory for structures outside of its buffer manager.
+# headroom for memory DuckDB does not track
 MEMORY_LIMIT_FRACTION = 0.75
+# request values end up in SQL statements and S3 keys
+BUCKET_PATTERN = re.compile(r'sebs-benchmarks-[a-z0-9.-]+')
+KEY_PATTERN = re.compile(r'[A-Za-z0-9._=/-]+')
+
+
+def validate_event(event):
+    bucket = event['bucket']
+    if not BUCKET_PATTERN.fullmatch(bucket['bucket']):
+        raise ValueError('Invalid bucket name')
+    if not KEY_PATTERN.fullmatch(bucket['output']):
+        raise ValueError('Invalid output prefix')
+
+    for tables in (event.get('tables', {}), event.get('inputs', {})):
+        for table, keys in tables.items():
+            if table not in queries.INPUT_TABLES:
+                raise ValueError('Invalid table name')
+            if not all(KEY_PATTERN.fullmatch(key) for key in keys):
+                raise ValueError('Invalid object key')
+
+    output = event.get('output', {})
+    if not KEY_PATTERN.fullmatch(output.get('prefix', 'unused')):
+        raise ValueError('Invalid output prefix')
+    if output.get('key', queries.PARTITION_KEY) != queries.PARTITION_KEY:
+        raise ValueError('Invalid partition key')
+    if not isinstance(output.get('count', 1), int) or output.get('count', 1) < 1:
+        raise ValueError('Invalid partition count')
 
 
 def elapsed_us(begin):
@@ -58,8 +85,7 @@ def s3_secret():
 
 
 def connect(workdir, access_mode):
-    # Each query gets a new connection: DuckDB caches remote data per instance, so a connection
-    # kept across warm invocations would measure queries that never read from storage.
+    # new connection per query, otherwise warm runs read from DuckDB's cache instead of S3
     con = duckdb.connect(config={
         'extension_directory': EXTENSION_DIR,
         'autoinstall_known_extensions': False,
@@ -103,7 +129,6 @@ def fetch_rows(con, sql):
 
 
 def run_statement(con, workdir, run):
-    """Execute a statement and collect what it read from storage, as reported by DuckDB."""
     profile = os.path.join(workdir, 'profile.json')
     con.execute("CALL enable_logging('HTTP')")
     con.execute("SET enable_profiling='json'")
@@ -113,7 +138,7 @@ def run_statement(con, workdir, run):
     result = run()
     query_time = elapsed_us(begin)
 
-    # The next statement would replace the profile.
+    # read before the next statement overwrites it
     with open(profile) as f:
         bytes_read = json.load(f)['io']['total_bytes_read']
     con.execute('PRAGMA disable_profiling')
@@ -203,7 +228,6 @@ def write_partitions(con, sql, workdir, bucket, prefix, key, count):
 
 
 def run_stage(event):
-    """Execute one task of a parallel query: read the inputs, and return or store the output."""
     bucket = event['bucket']['bucket']
     sql = queries.STAGES[event['stage']]
     output = event['output']
@@ -226,6 +250,7 @@ def run_stage(event):
 
 
 def handler(event):
+    validate_event(event)
     if event.get('operation') == 'stage':
         return run_stage(event)
     return run_queries(event)

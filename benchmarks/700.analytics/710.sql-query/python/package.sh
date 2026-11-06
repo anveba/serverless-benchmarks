@@ -1,6 +1,5 @@
 #!/bin/bash
-# Bundle the httpfs extension, so that cold starts do not measure its download.
-# The URL names the target architecture, because builds can be cross-architecture.
+# bundle httpfs so cold starts don't download it
 
 PACKAGE_DIR=$1
 
@@ -21,7 +20,7 @@ import shutil
 import sys
 import urllib.request
 
-# The server rejects the default user agent of urllib.
+# the default urllib user agent gets a 403
 request = urllib.request.Request(sys.argv[1], headers={"User-Agent": "SeBS-benchmark-build"})
 with urllib.request.urlopen(request) as response, open(sys.argv[2], "wb") as output:
     with gzip.GzipFile(fileobj=response) as extension:

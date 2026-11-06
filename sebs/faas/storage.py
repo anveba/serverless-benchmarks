@@ -106,6 +106,7 @@ class PersistentStorage(ABC, LoggingBase):
         super().__init__()
         self._cache_client = cache_client
         self.cached = False
+        self.uploaded_inputs: List[str] = []
         self._input_prefixes: List[str] = []
         self._output_prefixes: List[str] = []
         self.input_prefixes_files: List[List[str]] = []
@@ -328,7 +329,7 @@ class PersistentStorage(ABC, LoggingBase):
         return deleted
 
     def benchmark_data(
-        self, benchmark: str, requested_buckets: Tuple[int, int]
+        self, benchmark: str, requested_buckets: Tuple[int, int], input_id: Optional[str] = None
     ) -> Tuple[List[str], List[str]]:
         """Allocate storage prefixes for benchmark input and output data.
 
@@ -343,6 +344,8 @@ class PersistentStorage(ABC, LoggingBase):
         Args:
             benchmark: Name of the benchmark
             requested_buckets: Tuple of (input_prefix_count, output_prefix_count)
+            input_id: Identifies the input data, usually its size. Input uploaded for
+                another identifier does not count as cached.
 
         Returns:
             Tuple[List[str], List[str]]: Lists of (input_prefixes, output_prefixes)
@@ -379,6 +382,12 @@ class PersistentStorage(ABC, LoggingBase):
         if cached_storage is not None and cached_storage["buckets"]["input_uploaded"] is False:
             self.cached = False
 
+        self.uploaded_inputs = (
+            cached_storage["buckets"].get("uploaded_inputs", []) if cached_storage else []
+        )
+        if input_id is not None and input_id not in self.uploaded_inputs:
+            self.cached = False
+
         # query buckets if the input prefixes changed, or the input is not up to date.
         if self.cached is False:
 
@@ -398,6 +407,7 @@ class PersistentStorage(ABC, LoggingBase):
                     "input": self.input_prefixes,
                     "output": self.output_prefixes,
                     "input_uploaded": self.cached,
+                    "uploaded_inputs": self.uploaded_inputs,
                 }
             },
         )

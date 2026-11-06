@@ -87,8 +87,8 @@
     "name": "aws",
     "aws": {
       "region": "us-east-1",
-      "lambda-role": "",
       "resources": {
+        "lambda-role": "",
         "use-function-url": true,
         "function-url-auth-type": "NONE"
       }

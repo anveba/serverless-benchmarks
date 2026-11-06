@@ -1622,7 +1622,10 @@ class Benchmark(LoggingBase):
         if hasattr(self._benchmark_input_module, "buckets_count"):
             buckets = self._benchmark_input_module.buckets_count()
             storage = system_resources.get_storage(replace_existing)
-            input, output = storage.benchmark_data(self.benchmark, buckets)
+            input_id = size
+            if hasattr(self._benchmark_input_module, "input_id"):
+                input_id = self._benchmark_input_module.input_id(size)
+            input, output = storage.benchmark_data(self.benchmark, buckets, input_id)
 
             self._uses_storage = len(input) > 0 or len(output) > 0
 
@@ -1680,6 +1683,7 @@ class Benchmark(LoggingBase):
                         "input": storage.input_prefixes,
                         "output": storage.output_prefixes,
                         "input_uploaded": True,
+                        "uploaded_inputs": sorted({*storage.uploaded_inputs, input_id}),
                     }
                 },
             )

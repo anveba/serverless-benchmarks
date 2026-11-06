@@ -1,6 +1,10 @@
 # Copyright 2020-2025 ETH Zurich and the SeBS authors. All rights reserved.
 
-# Tables read by each query; download mode fetches only these.
+# allowed table names, including intermediate results
+INPUT_TABLES = {"customer", "orders", "lineitem", "supplier", "nation", "partials"}
+PARTITION_KEY = "orderkey"
+
+# tables used by each query
 TABLES = {
     "q1": ["lineitem"],
     "q3": ["customer", "orders", "lineitem"],
@@ -9,7 +13,7 @@ TABLES = {
     "q21": ["supplier", "lineitem", "orders", "nation"],
 }
 
-# TPC-H queries with the default substitution parameters.
+# TPC-H queries, default substitution parameters
 QUERIES = {
     "q1": """
         SELECT
@@ -97,9 +101,7 @@ QUERIES = {
     """,
 }
 
-# Stages of the parallel versions, which reassemble the queries above.
-# Q1 and Q6 aggregate each group of files, and then merge the partial aggregates.
-# Q12 hash-partitions both tables, joins each partition, and then merges the results.
+# stages of the parallel version, see scripts/sql_parallel.py
 STAGES = {
     "q1.partial": """
         SELECT

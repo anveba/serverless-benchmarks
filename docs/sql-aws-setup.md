@@ -95,7 +95,7 @@ The role must trust `lambda.amazonaws.com` and permit reading benchmark inputs, 
 cp configs/sql-aws.example.json configs/sql-aws.json
 ```
 
-The template selects AWS, `us-east-1`, Python 3.12, x64, ZIP packaging, and the SF1 warm memory sweep. Optionally edit `deployment.aws.lambda-role` to use your existing role ARN. Leave credentials out of JSON. This local config is gitignored.
+The template selects AWS, `us-east-1`, Python 3.12, x64, ZIP packaging, and the SF1 warm memory sweep. Optionally edit `deployment.aws.resources.lambda-role` to use your existing role ARN. New accounts may only allow most services, including Lambda, in the Region selected at sign-up, so set `deployment.aws.region` and `AWS_REGION` to that Region. Leave credentials out of JSON. This local config is gitignored.
 
 SeBS generates `cache-sql-aws/aws.json` after initializing resources. It records the region, account ID, bucket, and role. Keep that cache to reuse this deployment; choose a different cache for a different account/region.
 
@@ -134,13 +134,13 @@ sebs benchmark statistics results/sql-aws-sf1-check/results.json
 
 `test` selects SF0.01; `small` selects SF1; `large` selects SF10. Data generation/upload is outside invocation timing. `httpfs` reads remote ranges and columns; it does not first download whole tables. DuckDB can spill intermediate data to Lambda's temporary disk.
 
-**Required workaround:** use `--update-storage` whenever changing size or generated input layout. The storage cache marks the benchmark uploaded without tracking size, so switching `test` → `small` otherwise skips new uploads and produces S3 404 errors. This remains unfixed. Repeating the same already-uploaded size does not require reuploading.
+**Changing size:** the storage cache now tracks uploaded sizes, so switching `test` → `small` should upload the new data without `--update-storage`. This fix has not run against S3 yet. If you see S3 404 errors, pass `--update-storage` and report it. The flag is still needed when the generated layout of an already-uploaded size changes.
 
 For an optional repeated correctness check, repeat the SF1 invocation command with `--repetitions 5`, omit `--update-storage`, and use a fresh output directory. `benchmark invoke` records but does not enforce warm starts.
 
 ## 7. Controlled warm experiment and memory sweep
 
-`perf-cost` invokes the same complete five-query workload. It is not distributed query execution. `concurrent-invocations: 1` means one full workload at a time. It discards warm-up and rejects cold samples. Unlike `benchmark invoke --validate`, this experiment does not independently validate SQL answers; validate the workload first.
+By default, `perf-cost` invokes the same complete five-query workload. To measure one query per invocation, use the single-query config described in the benchmark README. It is not distributed query execution. `concurrent-invocations: 1` means one full workload at a time. It discards warm-up and rejects cold samples. Unlike `benchmark invoke --validate`, this experiment does not independently validate SQL answers; validate the workload first.
 
 The committed template uses five warm samples each at 1024, 2048, and 3008 MB. Adjust `experiments.perf-cost.memory-sizes` to allocations accepted by your account. More configured memory also changes CPU capacity; measure billed GB-seconds as well as latency.
 
@@ -220,7 +220,15 @@ Processing must find five measured invocations per group. `process` retrieves me
 
 - **SDK read timeout at 60 seconds:** this branch gives synchronous SDK invocations a 960-second read timeout, 10-second connection timeout, and one total attempt. This covers standard Lambda's 900-second maximum without automatic duplicate requests. It does not change the configured 300-second function timeout. Inspect CloudWatch before retrying a failed client request: execution may have continued.
 - **Python 3.11 package build fails:** the tested build attempted to compile DuckDB and a NumPy dependency without a compiler. Use the tested Python 3.12 runtime in the template and commands.
-- **S3 404 after changing size:** rerun the invocation with `--update-storage`. The current cache tracks upload status per benchmark, not per size.
+- **`_duckdb.abi3.so: cannot open shared object file` on Lambda, when building on Apple Silicon:** an x64 function received ARM packages, because the published build image predates the cross-architecture installer in this repository. Point the local tag at the image's x64 variant, then redeploy with `--update-code` (`docker pull <image>` restores the tag):
+
+  ```bash
+  R=spcleth/serverless-benchmarks; I=$R:build.aws.python.3.12-1.2.1
+  D=$(docker buildx imagetools inspect $I --raw | python3 -c "import json,sys; print(next(m['digest'] for m in json.load(sys.stdin)['manifests'] if m['platform'].get('architecture') == 'amd64'))")
+  docker pull $R@$D && docker tag $R@$D $I
+  ```
+- **Lambda denied by a service control policy:** new accounts may only allow most services in the Region selected at sign-up. Find it by trying `lambda list-functions` per Region, and set it in the config and `AWS_REGION`. Advanced features are not needed for this, and activating them cannot be reversed.
+- **S3 404 after changing size:** this should no longer happen, as the cache now tracks uploaded sizes. If it does, rerun the invocation with `--update-storage`.
 - **MemorySize rejected:** use allocations allowed by the account. The tested account rejected 4096 MB and accepted up to 3008 MB. This is an allocation limit, not a query out-of-memory error. Preserve result files for allocations completed before the failure; run only the remaining allocation in a new directory and process both directories.
 - **Invocation fails without an exception in SeBS output:** inspect the function's CloudWatch log group (`/aws/lambda/<function-name>`). Keep the failed `experiments.json` to match request IDs.
 - **Temporary disk fills:** download mode fetches whole input files, and DuckDB can spill in either mode. Lambda defaults to 512 MB of temporary storage; SeBS does not currently configure `EphemeralStorage`. Start with `httpfs` and the validated sizes.

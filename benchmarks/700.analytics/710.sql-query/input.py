@@ -9,17 +9,17 @@ from pathlib import Path
 QUERIES = {"q1": 1, "q3": 3, "q6": 6, "q12": 12, "q21": 21}
 TABLES = ["customer", "orders", "lineitem", "supplier", "nation"]
 
-# Files are split, so that parallel queries can assign them to workers.
+# files are split so parallel queries can hand them out to workers
 SIZES = {
     "test": {"scale_factor": 0.01, "file_size": "512KB", "row_group_size": 10000},
     "small": {"scale_factor": 1, "file_size": "16MB", "row_group_size": 122880},
     "large": {"scale_factor": 10, "file_size": "64MB", "row_group_size": 122880},
 }
 
-# Selects a scale factor beyond the fixed input sizes, generated with the file layout of large.
+# e.g. SEBS_SQL_SCALE_FACTOR=30, uses the file layout of large
 SCALE_FACTOR_OVERRIDE = "SEBS_SQL_SCALE_FACTOR"
 
-# Relative tolerance of comparisons; reference answers have a limited number of decimals.
+# official answers are rounded
 TOLERANCE = 1e-6
 ABSOLUTE_TOLERANCE = 0.01
 
@@ -29,7 +29,7 @@ def buckets_count():
 
 
 def _cache_dir(scale_factor):
-    # Generating and uploading data is expensive, and data for a scale factor never changes.
+    # generated data never changes for a scale factor
     path = Path(tempfile.gettempdir()) / "sebs-tpch" / f"sf{scale_factor}"
     path.mkdir(parents=True, exist_ok=True)
     return path
@@ -41,7 +41,7 @@ def _database(scale_factor):
     path = _cache_dir(scale_factor)
     marker = path / "database.complete"
     database = path / "tpch.duckdb"
-    # Without the marker, this is a leftover of an interrupted generation.
+    # no marker: leftover from an interrupted run
     if not marker.exists():
         database.unlink(missing_ok=True)
     con = duckdb.connect(str(database))
@@ -54,12 +54,16 @@ def _database(scale_factor):
 
 
 def _workload(size):
-    """Return the name of the workload, used in paths, and its parameters."""
     if SCALE_FACTOR_OVERRIDE in os.environ:
         scale_factor = float(os.environ[SCALE_FACTOR_OVERRIDE])
         scale_factor = int(scale_factor) if scale_factor.is_integer() else scale_factor
         return f"sf{scale_factor}", {**SIZES["large"], "scale_factor": scale_factor}
     return size, SIZES[size]
+
+
+def input_id(size):
+    # key for the storage cache, the override changes the data within a size
+    return _workload(size)[0]
 
 
 def _parquet_files(name, params):
@@ -143,7 +147,7 @@ def generate_input(
 
 def _expected_rows(scale_factor, query):
     con = _database(scale_factor)
-    # Official answers are independent of this DuckDB run, but cover only some scale factors.
+    # official answers if available, otherwise run the query locally
     answer = con.execute(
         "SELECT answer FROM tpch_answers() WHERE query_nr = ? AND scale_factor = ?",
         [QUERIES[query], scale_factor],

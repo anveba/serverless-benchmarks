@@ -52,7 +52,7 @@ These characterize the fixed five-query bundle, not individual-query service lat
 
 - **Python 3.11 packaging:** attempted source compilation; a NumPy dependency failed without a compiler. Python 3.12 built successfully (ZIP approximately 31.9 MB).
 - **SDK read timeout:** the default 60-second client timeout expired while SF10 continued for about 102–108 seconds. Logs showed repeated executions consistent with retries. The tested fix used a 360-second read timeout and one total attempt. The finalized fix uses 960 seconds to cover standard Lambda's 900-second maximum plus response margin, with one total attempt. The final setting was checked with a mocked client; AWS SF10 used the earlier 360-second setting.
-- **Input cache:** switching SF0.01 to SF1 skipped the new uploads and caused S3 404. Passing `--update-storage` fixed the run. Size-aware caching remains unfixed.
+- **Input cache:** switching SF0.01 to SF1 skipped the new uploads and caused S3 404. Passing `--update-storage` fixed the run. The cache now tracks sizes, but that fix has not run against S3.
 - **Account allocation limit:** AWS rejected 4096 MB. The 1024/2048 MB samples were already saved, so only 3008 MB was run separately. Original folders: `results/sql-aws-sf1-memory-sweep` and `results/sql-aws-sf1-memory-3008`.
 - **WSL-specific PATH:** the Windows Docker Desktop launcher preceded the working `/snap/bin/docker`. Prepending `/snap/bin` fixed this host; it is not a general prerequisite.
 
@@ -60,6 +60,7 @@ These characterize the fixed five-query bundle, not individual-query service lat
 
 - Correctness checks used `--trigger library` (AWS SDK); `perf-cost` uses HTTP and creates a public Function URL with `NONE` authentication. Do not compare client timings across these paths as if they were equivalent.
 - `perf-cost` filters warm samples and discards warm-up, but does not independently validate SQL answers. Validation was performed separately.
+- The public URL, with the role's full S3 access, was exposed to SQL injection through the request in the code used for this run. The function now validates requests, but anyone with the URL can still use it, so delete it after running experiments.
 - AWS testing used root credentials. Deployment with a restricted IAM identity has not been verified; the setup guide describes the intended IAM-based setup.
 - AWS cache and local config are account-specific and are not committed. Keep the cache for reuse and eventual cleanup.
 - Cleanup has not been run. The function, public URL, S3 data, and role may remain. Follow the setup guide's dry-run and cleanup steps when finished.
@@ -126,7 +127,7 @@ or distributed AWS query execution was added.
    queueing, errors, and the full cost observation window, including EC2 idle time.
 4. Treat splitting one query across functions as separate future work. The
    existing parallel Q1/Q6/Q12 coordinator remains local-only.
-5. Fix input-size caching and validate restricted-IAM deployment and other providers.
+5. Validate other providers. Restricted-IAM deployment was verified on a second account in `eu-north-1`.
 
 
 ## EC2 comparison milestone (comparison branch)
