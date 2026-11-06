@@ -76,7 +76,8 @@ def run(trace, client, output_dir):
     if type(limit) is not int or limit < 1:
         raise ValueError("Trace max-in-flight must be a positive integer")
     health = client.health()
-    if getattr(client, "backend", "persistent_service") == "lambda":
+    # Managed backends check their own configuration; the service checks its DuckDB snapshot.
+    if hasattr(client, "verify"):
         client.verify(health, trace)
     else:
         verify_snapshot(health, trace)

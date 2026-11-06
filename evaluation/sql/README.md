@@ -305,6 +305,22 @@ Do not commit gitignored results, local AWS configs, service/driver archives, la
 state, cache, venv or secrets. Earlier SQL benchmark/framework files and portable
 configs are prerequisites already described in the linked Lambda setup guide.
 
+## Athena
+
+Create Glue tables over the files of a Lambda `sql-workload` trace, then replay a trace against
+Athena. Tables, the workgroup and its result location are reused by later runs.
+
+```bash
+python -m evaluation.sql.athena_setup --trace results/sql-aws-workload-sf1/sql-workload/trace.json \
+  --region eu-north-1 --state results/sql-athena/athena.json
+python -m evaluation.sql.cloud_replay --backend athena --trace TRACE \
+  --athena-state results/sql-athena/athena.json --output-dir results/sql-athena/run-01
+```
+
+The deployment user needs `AmazonAthenaFullAccess`. The workgroup cancels queries scanning
+more than 10 GiB, and result reuse is disabled per query. Results are written to the benchmark
+bucket, so the SeBS cleanup removes them; the Glue database and workgroup stay.
+
 ## Next experiments
 
 Raise the client limit together with the EC2 service worker configuration and

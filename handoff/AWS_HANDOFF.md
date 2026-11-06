@@ -140,3 +140,34 @@ two concurrent requests; sparse Lambda measured-window compute was about 14.3x
 cheaper. Cost estimates exclude full setup/inter-run uptime and storage/network
 charges. Higher concurrency and Athena are next; neither has been measured.
 Cleanup commands are prepared; AWS termination/deletion is not yet verified.
+
+## Athena comparison (eu-north-1)
+
+Athena runs the same five queries on the same Parquet files, through Glue external tables.
+The SQL is unchanged and all answers validate. Setup and replay use `evaluation/sql/athena_setup.py`
+and `evaluation/sql/athena_client.py`; see the [comparison runbook](../evaluation/sql/README.md#athena).
+
+SF1, moderate workload (100 requests every 2 s, at most 2 in flight), two runs per backend in the
+order Lambda, Athena, Athena, Lambda. Lambda at 2048 MB. Driver: a laptop, not an EC2 instance in
+the region. Results: [aws-eu-north-1-athena-lambda-sf1.json](results/aws-eu-north-1-athena-lambda-sf1.json).
+
+| Query | Lambda mean / p95 (s) | Athena mean / p95 (s) |
+|---|---:|---:|
+| Q6 | 1.09 / 2.56 | 1.98 / 3.30 |
+| Q1 | 1.05 / 1.27 | 1.71 / 2.44 |
+| Q12 | 1.54 / 1.68 | 2.42 / 3.41 |
+| Q3 | 1.47 / 1.61 | 1.87 / 2.21 |
+| Q21 | 2.73 / 2.90 | 2.77 / 3.63 |
+| All | 1.58 / 2.84 | 2.15 / 3.41 |
+
+400/400 valid, no failures, 3 Lambda cold starts, no reused Athena results. Athena averaged 1.64 s
+engine time, 0.31 s planning and 0.07 s queueing; the client spent another 0.36 s on starting,
+polling (about 11 calls) and fetching. Both read about the same data per query (45–108 MB).
+
+Estimated cost per 100 queries: Lambda $0.0049 compute plus $0.0094 for S3 GET/HEAD requests,
+Athena $0.0302 for scanned data. S3 requests cost twice the Lambda compute. Athena's own S3
+requests are not included. Prices are assumed list prices, not checked for eu-north-1.
+
+Limits: the laptop driver adds more to Athena, which needs about 13 round trips per query against
+one for Lambda. One size, one memory setting, one workload, two runs per backend. These results are
+not comparable with the us-east-1 EC2 runs.
