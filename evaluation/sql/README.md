@@ -1,9 +1,9 @@
 # Reproduce the AWS SQL comparison
 
-This is evaluation tooling on `sql-ec2-comparison`, not a SeBS EC2 deployment
+This is evaluation tooling, not a SeBS EC2 deployment
 provider. It compares the existing `710.sql-query` Lambda with a persistent
-DuckDB HTTP service on EC2. Athena and higher-concurrency experiments are next;
-neither has been measured here. No query is split across functions.
+DuckDB HTTP service on EC2. Higher concurrency has not been measured here; Athena
+results are in [Athena](#athena). No query is split across functions.
 
 ## Recorded experiment and results
 
@@ -62,7 +62,7 @@ state and responses stay under gitignored `results/`. Preserve them for audit.
 
 ## 1. Start from a clean checkout and deploy Lambda
 
-Use this comparison branch and record the exact commit you checked out. From the
+Record the exact commit you checked out. From the
 repository root, follow [AWS SQL setup](../../docs/sql-aws-setup.md), sections 1–6,
 including dependencies, Docker, credentials, Lambda role, smoke and SF1 validation.
 Use Python 3.12, x64, 2048 MB and `httpfs`. The Docker PATH workaround in that guide
@@ -296,7 +296,7 @@ metadata stale. For the next fresh reproduction, archive the old local state/cac
 use a new state directory/cache or a fresh checkout, and redeploy from section 1.
 Do not reuse terminated instance launch requests to try to recreate a deployment.
 
-## Files to commit on this comparison branch
+## Files to commit
 
 Commit `evaluation/__init__.py`, this entire `evaluation/sql/` source/test/docs
 folder (including sanitized recorded-results.json), and the handoff links. Keep

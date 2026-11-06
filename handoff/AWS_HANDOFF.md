@@ -130,7 +130,7 @@ or distributed AWS query execution was added.
 5. Validate other providers. Restricted-IAM deployment was verified on a second account in `eu-north-1`.
 
 
-## EC2 comparison milestone (comparison branch)
+## EC2 comparison milestone
 
 The moderate, burst and sparse SF1 workloads are complete: 1,600 valid answers,
 zero execution failures. Reproduction, scripts, settings, limitations, sanitized

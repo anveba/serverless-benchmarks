@@ -71,9 +71,9 @@ An interrupted run may be incomplete; compare its request count with `trace.json
 Raw files contain account/resource details and should remain local.
 
 The runner is integrated with SeBS function deployment and processing. The
-[comparison runbook](../evaluation/sql/README.md) documents the EC2 adapter, cloud
-driver, repeated workloads, recorded results, cost scope and cleanup on the
-comparison branch. Athena remains future work. This small trace is a smoke test.
+[comparison runbook](../evaluation/sql/README.md) documents the EC2 and Athena adapters,
+cloud driver, repeated workloads, recorded results, cost scope and cleanup.
+This small trace is a smoke test.
 
 ## Verified Lambda smoke test
 
