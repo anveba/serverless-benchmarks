@@ -20,7 +20,7 @@ EXTENSION_DIR = os.path.join(os.path.dirname(os.path.dirname(duckdb.__file__)), 
 # headroom for memory DuckDB does not track
 MEMORY_LIMIT_FRACTION = 0.75
 # request values end up in SQL statements and S3 keys
-BUCKET_PATTERN = re.compile(r'sebs-benchmarks-[a-z0-9.-]+')
+BUCKET_PATTERN = re.compile(r'sebs-benchmarks-[a-z0-9._-]+')
 KEY_PATTERN = re.compile(r'[A-Za-z0-9._=/-]+')
 
 
@@ -74,14 +74,19 @@ def thread_count():
     return cpus
 
 
-def s3_secret():
+def storage_access():
+    """Return the URL scheme and the DuckDB secret for direct access to storage."""
     if 'MINIO_ADDRESS' in os.environ:
-        return ("KEY_ID '{MINIO_ACCESS_KEY}', SECRET '{MINIO_SECRET_KEY}', ENDPOINT '{MINIO_ADDRESS}', "
-                "URL_STYLE 'path', USE_SSL false, REGION 'us-east-1'").format(**os.environ)
+        return 's3', ("TYPE s3, KEY_ID '{MINIO_ACCESS_KEY}', SECRET '{MINIO_SECRET_KEY}', "
+                      "ENDPOINT '{MINIO_ADDRESS}', URL_STYLE 'path', USE_SSL false, "
+                      "REGION 'us-east-1'").format(**os.environ)
+    # set by SeBS on GCP, from the HMAC key of the deployment
+    if 'GCS_HMAC_KEY_ID' in os.environ:
+        return 'gs', "TYPE gcs, KEY_ID '{GCS_HMAC_KEY_ID}', SECRET '{GCS_HMAC_SECRET}'".format(**os.environ)
     if 'AWS_SESSION_TOKEN' in os.environ:
-        return ("KEY_ID '{AWS_ACCESS_KEY_ID}', SECRET '{AWS_SECRET_ACCESS_KEY}', "
-                "SESSION_TOKEN '{AWS_SESSION_TOKEN}', REGION '{AWS_REGION}'").format(**os.environ)
-    raise RuntimeError('Direct access to storage is not supported on this platform, use download mode.')
+        return 's3', ("TYPE s3, KEY_ID '{AWS_ACCESS_KEY_ID}', SECRET '{AWS_SECRET_ACCESS_KEY}', "
+                      "SESSION_TOKEN '{AWS_SESSION_TOKEN}', REGION '{AWS_REGION}'").format(**os.environ)
+    raise RuntimeError('Direct access to storage is not configured on this platform, use download mode.')
 
 
 def connect(workdir, access_mode):
@@ -100,14 +105,15 @@ def connect(workdir, access_mode):
         con.execute("SET memory_limit='{}MB'".format(int(memory * MEMORY_LIMIT_FRACTION)))
     if access_mode == 'httpfs':
         con.execute('LOAD httpfs')
-        con.execute('CREATE SECRET storage (TYPE s3, {})'.format(s3_secret()))
+        con.execute('CREATE SECRET storage ({})'.format(storage_access()[1]))
     return con
 
 
 def create_views(con, bucket, tables, access_mode, workdir):
     for table, keys in tables.items():
         if access_mode == 'httpfs':
-            paths = ['s3://{}/{}'.format(bucket, key) for key in keys]
+            scheme = storage_access()[0]
+            paths = ['{}://{}/{}'.format(scheme, bucket, key) for key in keys]
         else:
             paths = []
             for idx, key in enumerate(keys):

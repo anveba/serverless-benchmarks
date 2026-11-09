@@ -28,7 +28,8 @@ executed on the machine running SeBS.
 `access_mode` in the input selects how the function reads data:
 
 * `httpfs` (default) reads ranges of the files directly from storage, so column pruning reduces
-  the data transferred. It is implemented for S3 and S3-compatible storage only.
+  the data transferred. It is implemented for S3, S3-compatible storage, and Google Cloud Storage
+  with an HMAC key (see [the GCP guide](../../../docs/sql-gcp-setup.md)).
 * `download` fetches whole files to local disk with the SeBS storage wrapper, and works on all
   platforms. Lambda's default `/tmp` holds only 512 MB, and SeBS does not change it.
 
