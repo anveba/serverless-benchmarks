@@ -2785,6 +2785,11 @@ class GCP(System):
             )
             envs["NOSQL_STORAGE_DATABASE"] = db
 
+        # HMAC keys let benchmarks read Cloud Storage through S3-compatible clients, e.g., DuckDB.
+        if code_package.uses_storage and "GCS_HMAC_KEY_ID" in os.environ:
+            envs["GCS_HMAC_KEY_ID"] = os.environ["GCS_HMAC_KEY_ID"]
+            envs["GCS_HMAC_SECRET"] = os.environ["GCS_HMAC_SECRET"]
+
         return envs
 
     def update_function_configuration(

@@ -28,7 +28,8 @@ executed on the machine running SeBS.
 `access_mode` in the input selects how the function reads data:
 
 * `httpfs` (default) reads ranges of the files directly from storage, so column pruning reduces
-  the data transferred. It is implemented for S3 and S3-compatible storage only.
+  the data transferred. It is implemented for S3, S3-compatible storage, and Google Cloud Storage
+  with an HMAC key (see [the GCP guide](../../../docs/sql-gcp-setup.md)).
 * `azure` reads Blob Storage directly through the bundled DuckDB Azure extension,
   using the connection string supplied by the SeBS Azure wrapper. Follow the
   [Azure setup guide](../../../docs/sql-azure-setup.md) for the deployment checkpoint.

@@ -206,3 +206,6 @@ cache
 
 # Local Azure SQL deployment configuration
 /configs/sql-azure.json
+
+# Local GCP SQL deployment configuration
+/configs/sql-gcp.json
