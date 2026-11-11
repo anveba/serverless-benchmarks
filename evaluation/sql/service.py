@@ -58,8 +58,8 @@ class QueryService:
         if not re.fullmatch(r"[1-9][0-9]*(?:MB|GB)", memory_limit):
             raise ValueError("memory-limit must be a positive integer followed by MB or GB")
         self.input = manifest.get("input", manifest)
-        if self.input.get("access_mode", "httpfs") not in ("httpfs", "local"):
-            raise ValueError("Supported modes are httpfs (S3) and local (offline tests)")
+        if self.input.get("access_mode", "httpfs") not in ("httpfs", "azure", "local"):
+            raise ValueError("Supported modes are httpfs (S3), azure and local (offline tests)")
         if not isinstance(self.input.get("tables"), dict) or not self.input["tables"]:
             raise ValueError("Manifest must contain a non-empty tables object")
         for name, files in self.input["tables"].items():
@@ -87,11 +87,19 @@ class QueryService:
         if self.input.get("access_mode", "httpfs") == "local":
             return
         with duckdb.connect(config={"extension_directory": self.extension_directory}) as con:
+            extension = "azure" if self.input.get("access_mode") == "azure" else "httpfs"
             if install:
-                con.install_extension("httpfs")
-            con.load_extension("httpfs")
+                con.install_extension(extension)
+            con.load_extension(extension)
 
     def _storage(self, con):
+        if self.input.get("access_mode") == "azure":
+            value = os.environ.get("STORAGE_CONNECTION_STRING")
+            if not value:
+                raise RuntimeError("Azure storage setting missing from service process")
+            con.execute("SET azure_transport_option_type='curl'")
+            con.execute("CREATE SECRET storage (TYPE azure, CONNECTION_STRING " + literal(value) + ")")
+            return
         import boto3
         # A separate session per request supports EC2 instance-role credentials
         # and avoids sharing a boto3 Session across request threads.
@@ -122,14 +130,15 @@ class QueryService:
                     "autoload_known_extensions": False,
                 }) as con:
                     if self.input.get("access_mode", "httpfs") != "local":
-                        con.load_extension("httpfs")
+                        con.load_extension("azure" if self.input.get("access_mode") == "azure" else "httpfs")
                         self._storage(con)
                     connected = time.perf_counter()
                     for table in queries.TABLES[query]:
                         paths = self.input["tables"][table]
                         if self.input.get("access_mode", "httpfs") != "local":
                             bucket = self.input["bucket"]["bucket"]
-                            paths = [f"s3://{bucket}/{key}" for key in paths]
+                            scheme = "az" if self.input.get("access_mode") == "azure" else "s3"
+                            paths = [f"{scheme}://{bucket}/{key}" for key in paths]
                         expression = "[" + ", ".join(literal(path) for path in paths) + "]"
                         con.execute(f"CREATE VIEW {table} AS SELECT * FROM read_parquet({expression})")
                     ready = time.perf_counter()

@@ -1,7 +1,9 @@
 #!/bin/bash
-# bundle httpfs so cold starts don't download it
+# Bundle only the selected provider's extension; no cold-start downloads.
+set -euo pipefail
 
 PACKAGE_DIR=$1
+PLATFORM_DEPLOYMENT=${PLATFORM:-}
 
 if [[ "${TARGET_ARCHITECTURE}" == "arm64" ]]; then
   PLATFORM="linux_arm64"
@@ -11,10 +13,14 @@ fi
 
 VERSION="v$(sed -n 's/^duckdb==//p' requirements.txt)"
 EXTENSION_DIR="${PACKAGE_DIR}/duckdb_extensions/${VERSION}/${PLATFORM}"
-EXTENSION_URL="http://extensions.duckdb.org/${VERSION}/${PLATFORM}/httpfs.duckdb_extension.gz"
+EXTENSION_NAME=httpfs
+if [[ "${PLATFORM_DEPLOYMENT}" == "AZURE" ]]; then
+  EXTENSION_NAME=azure
+fi
+EXTENSION_URL="https://extensions.duckdb.org/${VERSION}/${PLATFORM}/${EXTENSION_NAME}.duckdb_extension.gz"
 
 mkdir -p "${EXTENSION_DIR}"
-python3 - "${EXTENSION_URL}" "${EXTENSION_DIR}/httpfs.duckdb_extension" <<'EOF'
+python3 - "${EXTENSION_URL}" "${EXTENSION_DIR}/${EXTENSION_NAME}.duckdb_extension" <<'EOF'
 import gzip
 import shutil
 import sys

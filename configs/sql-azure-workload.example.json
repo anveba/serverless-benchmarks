@@ -1,0 +1,100 @@
+{
+  "experiments": {
+    "deployment": "azure",
+    "update_code": false,
+    "update_storage": false,
+    "download_results": false,
+    "architecture": "x64",
+    "system_variant": "package",
+    "runtime": {
+      "language": "python",
+      "version": "3.11"
+    },
+    "type": "sql-workload",
+    "network-ping-pong": {
+      "invocations": 50,
+      "repetitions": 1000,
+      "threads": 1
+    },
+    "invocation-overhead": {
+      "repetitions": 5,
+      "N": 20,
+      "type": "payload",
+      "payload_begin": 1024,
+      "payload_end": 6251000,
+      "payload_points": 20,
+      "code_begin": 1048576,
+      "code_end": 261619712,
+      "code_points": 20
+    },
+    "eviction-model": {
+      "invocations": 1,
+      "function_copy_idx": 0,
+      "repetitions": 5,
+      "sleep": 1
+    },
+    "sql-workload": {
+      "benchmark": "710.sql-query",
+      "input-size": "small",
+      "memory": 1536,
+      "trigger": "http",
+      "max-in-flight": 2,
+      "requests": [
+        {
+          "at": 0,
+          "query": "q6"
+        },
+        {
+          "at": 2,
+          "query": "q1"
+        },
+        {
+          "at": 4,
+          "query": "q12"
+        },
+        {
+          "at": 6,
+          "query": "q3"
+        },
+        {
+          "at": 8,
+          "query": "q21"
+        },
+        {
+          "at": 10,
+          "query": "q6"
+        },
+        {
+          "at": 12,
+          "query": "q1"
+        },
+        {
+          "at": 14,
+          "query": "q12"
+        },
+        {
+          "at": 16,
+          "query": "q3"
+        },
+        {
+          "at": 18,
+          "query": "q21"
+        }
+      ]
+    },
+    "benchmark-inputs": {
+      "710.sql-query": {
+        "access_mode": "azure",
+        "queries": [
+          "q6"
+        ]
+      }
+    }
+  },
+  "deployment": {
+    "name": "azure",
+    "azure": {
+      "region": "swedencentral"
+    }
+  }
+}

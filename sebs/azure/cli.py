@@ -153,15 +153,20 @@ class AzureCLI(LoggingBase):
         Returns:
             Login command output as bytes.
         """
-        result = self.execute(
-            "az login -u {0} --service-principal --tenant {1} -p {2}".format(
-                appId,
-                tenant,
-                password,
-            )
+        exit_code, (stdout, stderr) = self.docker_instance.exec_run(
+            ["az", "login", "--username", appId, "--service-principal", "--tenant", tenant,
+             "--password=" + password, "--only-show-errors", "--output", "json"],
+            user="docker_user", demux=True,
         )
+        if exit_code != 0:
+            # Avoid echoing secret-bearing argv/stdout. A leading dash or spaces
+            # in a client secret must remain one password argument.
+            message = (stderr or b"").decode("utf-8", errors="replace")
+            if password:
+                message = message.replace(password, "[REDACTED]")
+            raise RuntimeError("Azure service-principal login failed: " + message) from None
         self.logging.info("Azure login successful")
-        return result
+        return stdout or b""
 
     def upload_package(self, directory: str, dest: str) -> None:
         """Upload function package to Docker container.

@@ -29,6 +29,9 @@ executed on the machine running SeBS.
 
 * `httpfs` (default) reads ranges of the files directly from storage, so column pruning reduces
   the data transferred. It is implemented for S3 and S3-compatible storage only.
+* `azure` reads Blob Storage directly through the bundled DuckDB Azure extension,
+  using the connection string supplied by the SeBS Azure wrapper. Follow the
+  [Azure setup guide](../../../docs/sql-azure-setup.md) for the deployment checkpoint.
 * `download` fetches whole files to local disk with the SeBS storage wrapper, and works on all
   platforms. Lambda's default `/tmp` holds only 512 MB, and SeBS does not change it.
 

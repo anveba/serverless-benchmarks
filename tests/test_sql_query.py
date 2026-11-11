@@ -52,6 +52,15 @@ class QuerySelectionTests(unittest.TestCase):
             expected.assert_called_once_with(1, "q6")
             self.assertIn("Missing", sql_input.validate_output(None, result, {}, "python"))
 
+    def test_azure_access_is_explicit_and_preserved_in_payload(self):
+        result, _ = self.generate({"access_mode": "azure", "queries": ["q6"]})
+        self.assertEqual(result["access_mode"], "azure")
+        for value in ["typo", None, []]:
+            with self.subTest(value=value), patch.object(sql_input, "_parquet_files") as generate:
+                with self.assertRaisesRegex(ValueError, "access_mode"):
+                    self.generate({"access_mode": value})
+                generate.assert_not_called()
+
     def test_each_supported_query_can_be_selected(self):
         for query in sql_input.QUERIES:
             with self.subTest(query=query):

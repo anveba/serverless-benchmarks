@@ -978,9 +978,10 @@ def resources_remove(resource, prefix, wait, dry_run, **kwargs):
                 continue
 
             sebs_client.logging.info(f"Removing resource group: {group}")
-            deployment_client.config.resources.delete_resource_group(
-                deployment_client.cli_instance, group, wait
-            )
+            if not dry_run:
+                deployment_client.config.resources.delete_resource_group(
+                    deployment_client.cli_instance, group, wait
+                )
     else:
         raise NotImplementedError(f"Resource {resource} not supported.")
 

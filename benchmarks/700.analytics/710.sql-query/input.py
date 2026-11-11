@@ -105,9 +105,11 @@ def _selected_queries(parameters):
         parameters = {}
     if not isinstance(parameters, dict):
         raise ValueError("SQL input parameters must be an object")
-    unknown = set(parameters) - {"queries"}
+    unknown = set(parameters) - {"queries", "access_mode"}
     if unknown:
         raise ValueError(f"Unknown SQL input parameters: {sorted(unknown)}")
+    if parameters.get("access_mode", "httpfs") not in ("httpfs", "azure", "download"):
+        raise ValueError("access_mode must be httpfs, azure or download")
     selected = parameters.get("queries", list(QUERIES))
     if not isinstance(selected, list) or not selected:
         raise ValueError("queries must be a non-empty list of query IDs")
@@ -139,7 +141,7 @@ def generate_input(
             "output": output_paths[0],
         },
         "scale_factor": params["scale_factor"],
-        "access_mode": "httpfs",
+        "access_mode": (parameters or {}).get("access_mode", "httpfs"),
         "queries": selected_queries,
         "tables": tables,
     }

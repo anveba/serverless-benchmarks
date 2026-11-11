@@ -698,7 +698,9 @@ class AzureResources(Resources):
         ret = cast(AzureResources, res)
         super(AzureResources, AzureResources).initialize(ret, dct)
 
-        ret._resource_group = dct["resource_group"]
+        # serialize() omits this until allocation succeeds. A failed first
+        # login can therefore leave a valid cache with only storage_accounts.
+        ret._resource_group = dct.get("resource_group")
         if "storage_accounts" in dct:
             ret._storage_accounts = [
                 AzureResources.Storage.deserialize(x) for x in dct["storage_accounts"]
@@ -747,6 +749,7 @@ class AzureResources(Resources):
         """
         cached_config = cache.get_config("azure")
         ret = AzureResources()
+        ret.logging_handlers = handlers
         # Load cached values
         if cached_config and "resources" in cached_config and len(cached_config["resources"]) > 0:
             logging.info("Using cached resources for Azure")

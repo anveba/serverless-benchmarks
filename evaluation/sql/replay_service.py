@@ -87,7 +87,7 @@ def run(trace, client, output_dir):
                            "python": platform.python_version()},
                 "service": health, "trace": trace, "max_in_flight": limit,
                 "validation_in_timing": False, "automatic_retries": False,
-                "warmup": False, "cold_start_semantics": "not_applicable"}
+                "warmup": False, "cold_start_semantics": getattr(type(client), "cold_start_semantics", "not_applicable")}
     (output_dir / "trace.json").write_text(json.dumps(metadata, indent=2) + "\n")
     records, responses = [], {}
 

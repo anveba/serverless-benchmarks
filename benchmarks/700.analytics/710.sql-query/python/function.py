@@ -25,6 +25,8 @@ KEY_PATTERN = re.compile(r'[A-Za-z0-9._=/-]+')
 
 
 def validate_event(event):
+    if event.get('access_mode', 'httpfs') not in ('httpfs', 'azure', 'download'):
+        raise ValueError('Unsupported access mode')
     bucket = event['bucket']
     if not BUCKET_PATTERN.fullmatch(bucket['bucket']):
         raise ValueError('Invalid bucket name')
@@ -54,12 +56,20 @@ def elapsed_us(begin):
 def memory_limit_mb():
     if 'AWS_LAMBDA_FUNCTION_MEMORY_SIZE' in os.environ:
         return int(os.environ['AWS_LAMBDA_FUNCTION_MEMORY_SIZE'])
-    try:
-        with open('/sys/fs/cgroup/memory.max') as f:
-            limit = f.read().strip()
-        return None if limit == 'max' else int(limit) // 2**20
-    except OSError:
-        return None
+    # Azure Consumption may expose cgroup v1 rather than v2.
+    for filename in ['/sys/fs/cgroup/memory.max',
+                     '/sys/fs/cgroup/memory/memory.limit_in_bytes']:
+        try:
+            with open(filename) as f:
+                value = f.read().strip()
+            if value != 'max' and 0 < int(value) < 2**60:
+                return int(value) // 2**20
+        except (OSError, ValueError):
+            pass
+    # A query budget for the known Consumption host, not its billing memory.
+    if 'WEBSITE_INSTANCE_ID' in os.environ and 'STORAGE_CONNECTION_STRING' in os.environ:
+        return 1536
+    return None
 
 
 def thread_count():
@@ -84,7 +94,15 @@ def s3_secret():
     raise RuntimeError('Direct access to storage is not supported on this platform, use download mode.')
 
 
+def azure_secret():
+    connection_string = os.environ.get('STORAGE_CONNECTION_STRING')
+    if not connection_string:
+        raise RuntimeError('Azure access requires the SeBS STORAGE_CONNECTION_STRING setting')
+    return "CONNECTION_STRING '{}'".format(connection_string.replace("'", "''"))
+
+
 def connect(workdir, access_mode):
+    secret = azure_secret() if access_mode == 'azure' else None
     # new connection per query, otherwise warm runs read from DuckDB's cache instead of S3
     con = duckdb.connect(config={
         'extension_directory': EXTENSION_DIR,
@@ -101,6 +119,17 @@ def connect(workdir, access_mode):
     if access_mode == 'httpfs':
         con.execute('LOAD httpfs')
         con.execute('CREATE SECRET storage (TYPE s3, {})'.format(s3_secret()))
+    elif access_mode == 'azure':
+        try:
+            con.execute('LOAD azure')
+            # Use normal Linux CA discovery; the default static SDK transport
+            # can point at a certificate path absent in Azure Functions.
+            con.execute("SET azure_transport_option_type='curl'")
+            con.execute('CREATE SECRET storage (TYPE azure, {})'.format(secret))
+        except Exception:
+            con.close()
+            # DuckDB errors can include the full CREATE SECRET statement.
+            raise RuntimeError('Azure storage initialization failed; check the bundled extension and storage setting') from None
     return con
 
 
@@ -108,6 +137,8 @@ def create_views(con, bucket, tables, access_mode, workdir):
     for table, keys in tables.items():
         if access_mode == 'httpfs':
             paths = ['s3://{}/{}'.format(bucket, key) for key in keys]
+        elif access_mode == 'azure':
+            paths = ['az://{}/{}'.format(bucket, key) for key in keys]
         else:
             paths = []
             for idx, key in enumerate(keys):

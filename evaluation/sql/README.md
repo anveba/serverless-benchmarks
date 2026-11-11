@@ -5,6 +5,9 @@ provider. It compares the existing `710.sql-query` Lambda with a persistent
 DuckDB HTTP service on EC2. Higher concurrency has not been measured here; Athena
 results are in [Athena](#athena). No query is split across functions.
 
+Azure counterpart: [setup and reproduction](../../docs/sql-azure-setup.md),
+[handoff and results](../../handoff/AZURE_HANDOFF.md).
+
 ## Recorded experiment and results
 
 SF1 (`small`), DuckDB 2.0.0, Python 3.12, x86-64, `us-east-1`. The query order is

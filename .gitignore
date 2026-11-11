@@ -203,3 +203,6 @@ cache
 /configs/sql-aws-single-query.json
 
 /configs/sql-aws-workload.json
+
+# Local Azure SQL deployment configuration
+/configs/sql-azure.json
