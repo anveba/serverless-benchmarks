@@ -84,6 +84,34 @@ The us-east-1 sparse runs (EC2 and Lambda, 2 runs each) had mean / p95 latencies
 including idle time in the window) and $0.0055 (Lambda), without storage requests. GCP compute
 without storage requests was about $0.009 per 100. Regions, drivers and CPU allocations differ.
 
+## Function vs BigQuery, SF1
+
+BigQuery runs the same five queries through external tables over the same Parquet files, with the
+query cache off. The SQL is unchanged and all answers validate. Setup and replay use
+`evaluation/sql/bigquery_setup.py` and `bigquery_client.py`. Moderate workload (100 requests every
+2 s, at most 2 in flight), two runs per backend. Results:
+[gcp-function-bigquery-sf1.json](results/gcp-function-bigquery-sf1.json).
+
+| Query | Function mean / p95 (s) | BigQuery mean / p95 (s) | BigQuery MB billed |
+|---|---:|---:|---:|
+| Q6 | 2.25 / 4.57 | 0.67 / 0.85 | 321 |
+| Q1 | 2.63 / 4.08 | 0.73 / 0.86 | 447 |
+| Q12 | 2.79 / 3.67 | 0.95 / 1.25 | 246 |
+| Q3 | 3.15 / 3.70 | 1.16 / 1.31 | 312 |
+| Q21 | 5.42 / 6.13 | 1.17 / 1.32 | 474 |
+| All | 3.25 / 5.95 | 0.94 / 1.29 | 360 |
+
+400/400 valid, no failures, 6 function cold starts, no BigQuery cache hits. BigQuery averaged
+0.64 s execution and 0.04 s queueing, plus 0.26 s of client overhead.
+
+Estimated cost per 100 queries: function $0.0194 ($0.0088 compute, $0.0105 storage requests),
+BigQuery $0.21 at $6.25 per TiB, before the free TiB per month. BigQuery bills about 360 MB per
+query, against 45–108 MB read by DuckDB from the same files: it bills uncompressed column sizes.
+So BigQuery was 3.5x faster and about 11x more expensive per query here.
+
+The BigQuery runs were on 2026-11-10 around 23:45 and the function runs about 35 minutes later; the
+first function attempts were refused (403) before any query ran, so the order does not alternate.
+
 ## Limits
 
 - 10 requests, each query twice: a first look, not a measurement.
