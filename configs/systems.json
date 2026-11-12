@@ -197,6 +197,9 @@
         "base_images": {
           "x64": {
             "10": "amazon/aws-lambda-dotnet:10.2026.11.11.03-x86_64"
+          },
+          "arm64": {
+            "10": "amazon/aws-lambda-dotnet:10.2026.11.11.03-arm64"
           }
         },
         "images": [
