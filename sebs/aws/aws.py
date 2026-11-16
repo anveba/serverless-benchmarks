@@ -17,6 +17,7 @@ from typing import cast, Dict, List, Optional, Tuple, Type, Union  # noqa
 
 import boto3
 import docker
+from botocore.exceptions import ClientError
 
 from sebs.aws.dynamodb import DynamoDB
 from sebs.aws.resources import AWSSystemResources
@@ -318,6 +319,19 @@ class AWS(System):
         else:
             raise NotImplementedError()
 
+    def _function_options(self, code_package):
+        options = self.config.resources.function_options(code_package.benchmark)
+        if getattr(code_package,'uses_sql',False):
+            sql_options = self.system_resources.get_sql_storage().function_options()
+            envs = {**options.get('Environment',{}).get('Variables',{}),
+                    **sql_options.get('Environment',{}).get('Variables',{})}
+            options = {**options, **sql_options, 'Environment':{'Variables':envs}}
+        return options
+
+    def _execution_role(self, code_package):
+        options = self._function_options(code_package)
+        return options['Role'] if 'Role' in options else self.config.resources.lambda_role(self.session)
+
     def create_function(
         self,
         code_package: Benchmark,
@@ -364,7 +378,7 @@ class AWS(System):
                 ret["Configuration"]["FunctionArn"],
                 code_package.hash,
                 language_runtime,
-                self.config.resources.lambda_role(self.session),
+                self._execution_role(code_package),
                 function_cfg,
             )
             self.update_function(lambda_function, code_package, system_variant, container_uri)
@@ -373,7 +387,7 @@ class AWS(System):
         except self.client.exceptions.ResourceNotFoundException:
             create_function_params = {
                 "FunctionName": func_name,
-                "Role": self.config.resources.lambda_role(self.session),
+                "Role": self._execution_role(code_package),
                 "MemorySize": memory,
                 "Timeout": timeout,
                 "Architectures": [self._map_architecture(architecture)],
@@ -420,6 +434,7 @@ class AWS(System):
             create_function_params = {
                 k: v for k, v in create_function_params.items() if v is not None
             }
+            create_function_params.update(self._function_options(code_package))
             ret = self.client.create_function(**create_function_params)
 
             lambda_function = LambdaFunction(
@@ -428,7 +443,7 @@ class AWS(System):
                 ret["FunctionArn"],
                 code_package.hash,
                 language_runtime,
-                self.config.resources.lambda_role(self.session),
+                self._execution_role(code_package),
                 function_cfg,
                 code_bucket,
             )
@@ -550,7 +565,9 @@ class AWS(System):
         # We can only update storage configuration once it has been processed for this benchmark
         assert code_package.has_input_processed
 
-        envs = env_variables.copy()
+        options = self._function_options(code_package)
+        network = {key: value for key, value in options.items() if key in ('VpcConfig','Role')}
+        envs = {**options.get('Environment', {}).get('Variables', {}), **env_variables}
         if code_package.uses_nosql:
             nosql_storage = self.system_resources.get_nosql_storage()
             for original_name, actual_name in nosql_storage.get_tables(
@@ -575,15 +592,35 @@ class AWS(System):
                 Timeout=function.config.timeout,
                 MemorySize=function.config.memory,
                 Environment={"Variables": envs},
+                **network,
             )
         else:
             self.client.update_function_configuration(
                 FunctionName=function.name,
                 Timeout=function.config.timeout,
                 MemorySize=function.config.memory,
+                **network,
             )
         self.wait_function_updated(function)
+        if 'Role' in options:
+            function.role = options['Role']
         self.logging.info(f"Updated configuration of {function.name} function. ")
+
+    def is_configuration_changed(self, cached_function: Function, benchmark: Benchmark) -> bool:
+        changed = super().is_configuration_changed(cached_function, benchmark)
+        options = self._function_options(benchmark)
+        if not options:
+            return changed
+        current = self.client.get_function_configuration(FunctionName=cached_function.name)
+        if 'Role' in options and current.get('Role') != options['Role']:
+            changed = True
+        for key in ('SubnetIds', 'SecurityGroupIds'):
+            if 'VpcConfig' in options and set(current.get('VpcConfig', {}).get(key, [])) != set(options['VpcConfig'][key]):
+                changed = True
+        for key, value in options.get('Environment', {}).get('Variables', {}).items():
+            if current.get('Environment', {}).get('Variables', {}).get(key) != value:
+                changed = True
+        return changed
 
     # @staticmethod
     def default_function_name(
@@ -822,8 +859,8 @@ class AWS(System):
     ) -> None:
         """Download execution metrics from CloudWatch Logs.
 
-        Queries CloudWatch Logs for Lambda execution reports and parses them
-        to extract performance metrics for each request.
+        Reuses complete native REPORT measurements already returned by synchronous
+        invocations. Queries CloudWatch Logs only for requests missing a report.
 
         Args:
             function_name: Name of the Lambda function
@@ -833,6 +870,24 @@ class AWS(System):
             metrics: Dictionary to store collected metrics
         """
 
+        # LibraryTrigger already parses the native REPORT returned by Invoke(LogType=Tail).
+        # Preserve these measurements and query CloudWatch only for absent reports.
+        pending = {
+            request_id: result for request_id, result in requests.items()
+            if not (
+                result.billing.billed_time is not None and result.billing.billed_time > 0
+                and result.billing.memory is not None and result.billing.memory > 0
+                and result.billing.gb_seconds > 0
+                and result.stats.memory_used is not None
+            )
+        }
+        if not pending:
+            self.logging.info(
+                f"AWS provider metrics already available for {len(requests)} invocations; "
+                "reusing saved native reports."
+            )
+            return
+
         if not self.logs_client:
             self.logs_client = boto3.client(
                 service_name="logs",
@@ -841,44 +896,53 @@ class AWS(System):
                 region_name=self.config.region,
             )
 
-        query = self.logs_client.start_query(
-            logGroupName="/aws/lambda/{}".format(function_name),
+        group_name = f"/aws/lambda/{function_name}"
+        query_params = dict(
+            logGroupName=group_name,
             queryString="filter @message like /REPORT/",
-            startTime=math.floor(start_time),
-            endTime=math.ceil(end_time + 1),
+            startTime=max(0, math.floor(start_time) - 60),
+            endTime=math.ceil(end_time) + 60,
             limit=10000,
         )
+        try:
+            query = self.logs_client.start_query(**query_params)
+        except ClientError as error:
+            # A first invocation can finish before its log group is created.
+            # Only repair that boundary; do not mask retention or authorization errors.
+            detail = error.response.get("Error", {})
+            message = detail.get("Message", "").lower()
+            if detail.get("Code") != "MalformedQueryException" or "creation time" not in message:
+                raise
+            groups = self.logs_client.describe_log_groups(logGroupNamePrefix=group_name).get("logGroups", [])
+            group = next((item for item in groups if item["logGroupName"] == group_name), None)
+            minimum_end = math.ceil(group["creationTime"] / 1000) + 60 if group else 0
+            if minimum_end <= query_params["endTime"]:
+                raise
+            query_params["endTime"] = minimum_end
+            query = self.logs_client.start_query(**query_params)
+
         query_id = query["queryId"]
         response = None
-
-        while response is None or response["status"] == "Running":
+        while response is None or response["status"] in ("Scheduled", "Running"):
             self.logging.info("Waiting for AWS query to complete ...")
             time.sleep(1)
             response = self.logs_client.get_query_results(queryId=query_id)
-        # results contain a list of matches
-        # each match has multiple parts, we look at `@message` since this one
-        # contains the report of invocation
-        results = response["results"]
-        results_count = len(requests.keys())
-        results_processed = 0
-        requests_ids = set(requests.keys())
-        for val in results:
-            for result_part in val:
-                if result_part["field"] == "@message":
-                    request_id = AWS.parse_aws_report(result_part["value"], requests)
+        if response["status"] != "Complete":
+            raise RuntimeError(f"CloudWatch metrics query {query_id} ended with {response['status']}")
 
+        missing_ids = set(pending)
+        for row in response["results"]:
+            for part in row:
+                if part["field"] == "@message":
+                    request_id = AWS.parse_aws_report(part["value"], pending)
                     if request_id is None:
-                        self.logging.error(
-                            "Request incomplete, cannot identify ID! "
-                            f"Request: {result_part['value']}"
-                        )
-
-                    if request_id in requests:
-                        results_processed += 1
-                        requests_ids.remove(request_id)
+                        self.logging.error("Cannot identify request ID in AWS REPORT")
+                    else:
+                        missing_ids.discard(request_id)
+        found = len(requests) - len(missing_ids)
         self.logging.info(
-            f"Received {len(results)} entries, found results for {results_processed} "
-            f"out of {results_count} invocations"
+            f"Received {len(response['results'])} log entries; provider metrics available "
+            f"for {found} out of {len(requests)} invocations"
         )
 
     def create_trigger(self, function: Function, trigger_type: Trigger.TriggerType) -> Trigger:

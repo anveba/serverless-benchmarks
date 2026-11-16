@@ -190,6 +190,9 @@ class System(ABC, LoggingBase):
         Returns:
             List[str]: List of existing deployment resource IDs
         """
+        # SQL/NoSQL-only self-hosted functions do not require an object store.
+        if hasattr(self.config.resources, 'storage_config') and self.config.resources.storage_config is None:
+            return []
         return self.system_resources.get_storage().find_deployments()
 
     def cleanup_resources(self, dry_run: bool = False) -> dict:
@@ -259,7 +262,8 @@ class System(ABC, LoggingBase):
             self.logging.info(f"Generating unique resource name {res_id}")
 
         # Ensure that the bucket is created - this allocates the new resource
-        self.system_resources.get_storage().get_bucket(Resources.StorageBucketType.BENCHMARKS)
+        if not (hasattr(self.config.resources,'storage_config') and self.config.resources.storage_config is None):
+            self.system_resources.get_storage().get_bucket(Resources.StorageBucketType.BENCHMARKS)
 
     def initialize(
         self,

@@ -1,0 +1,13 @@
+{
+  "sql": {
+    "type": "postgresql",
+    "postgresql": {
+      "provider": "docker",
+      "state_dir": "results/postgresql-storage",
+      "cpus": 2,
+      "memory_mb": 4096,
+      "mapped_port": 9013,
+      "bind_host": "127.0.0.1"
+    }
+  }
+}

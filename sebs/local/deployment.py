@@ -56,7 +56,7 @@ class Deployment(LoggingBase):
         """Initialize a new deployment."""
         super().__init__()
         self._functions: List[LocalFunction] = []
-        self._storage: Optional[S3CompatibleStorage]
+        self._storage: Optional[S3CompatibleStorage] = None
         self._inputs: List[dict] = []
         self._memory_measurement_pids: List[int] = []
         self._measurement_file: Optional[str] = None
@@ -136,12 +136,13 @@ class Deployment(LoggingBase):
             if "memory_measurements" in input_data:
                 deployment._memory_measurement_pids = input_data["memory_measurements"]["pids"]
                 deployment._measurement_file = input_data["memory_measurements"]["file"]
-            storage_type = OBJECT_STORAGE_IMPLEMENTATIONS[input_data["storage"]["type"]]
-            deployment._storage = storage_type.deserialize(
-                storage_type.CONFIG_TYPE.deserialize(input_data["storage"]),
-                cache_client,
-                LocalResources(),
-            )
+            if input_data.get("storage") is not None:
+                storage_type = OBJECT_STORAGE_IMPLEMENTATIONS[input_data["storage"]["type"]]
+                deployment._storage = storage_type.deserialize(
+                    storage_type.CONFIG_TYPE.deserialize(input_data["storage"]),
+                    cache_client,
+                    LocalResources(),
+                )
             return deployment
 
     def shutdown(self, output_json: str) -> None:

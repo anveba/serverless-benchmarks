@@ -8,6 +8,9 @@ results are in [Athena](#athena). No query is split across functions.
 Azure counterpart: [setup and reproduction](../../docs/sql-azure-setup.md),
 [handoff and results](../../handoff/AZURE_HANDOFF.md).
 
+Integrated PostgreSQL storage and function-client benchmark: [AWS setup and cleanup](../../docs/sql-postgresql-aws.md).
+It is a separate architecture from the direct EC2/DuckDB comparison below.
+
 ## Recorded experiment and results
 
 SF1 (`small`), DuckDB 2.0.0, Python 3.12, x86-64, `us-east-1`. The query order is

@@ -465,6 +465,20 @@ class SeBS(LoggingBase):
         assert impl, f"NoSQL configuration for type {storage_type} not supported"
         return impl
 
+    @staticmethod
+    def get_sql_implementation(storage_type):
+        from sebs.storage.postgresql import PostgreSQL
+        if storage_type != types.SQLStorage.POSTGRESQL:
+            raise ValueError('Unsupported SQL storage type: ' + str(storage_type))
+        return PostgreSQL
+
+    @staticmethod
+    def get_sql_config_implementation(storage_type):
+        from sebs.storage.sql_config import PostgreSQLConfig
+        if storage_type != types.SQLStorage.POSTGRESQL:
+            raise ValueError('Unsupported SQL storage type: ' + str(storage_type))
+        return PostgreSQLConfig
+
     def shutdown(self):
         """Shutdown the SeBS client and release resources.
 

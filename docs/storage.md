@@ -1,7 +1,7 @@
 # Storage Configuration
 
 SeBS benchmarks rely on persistent storage for both input and output data.
-Most applications use object storage for storing inputs and outputs, while others can use NoSQL database.
+Most applications use object storage for storing inputs and outputs, while others use NoSQL or SQL databases.
 On cloud platforms, you can use cloud-native storage services like S3, DynamoDB, CosmosDB, or Firestore.
 SeBS will automatically allocate resources and configure them.
 With open-source platforms like OpenWhisk or local deployment, SeBS needs a self-hosted storage instance.
@@ -150,3 +150,31 @@ Each storage service uses a Docker volume to persist data. The name of the volum
 
 In Minio, the volume is mapped to a physical location on the filesystem, and the directory can be removed once the experiments are finished.
 For RustFS and ScyllaDB, we use named Docker volumes that can be removed using Docker commands: `docker volume rm rustfs-volume scylladb-volume`.
+
+
+## SQL storage (PostgreSQL)
+
+`720.sql-postgresql` uses a separate PostgreSQL service, analogous to ScyllaDB for
+NoSQL. Start the Docker backend with:
+
+```bash
+sebs storage start sql configs/storage-postgresql.json --output-json results/postgresql-storage.json
+sebs storage status sql results/postgresql-storage.json
+```
+
+Pass the generated JSON with `--storage-configuration` to normal benchmark and
+experiment invocations. Input preparation generates and loads data automatically.
+The `sql` host extra (`pip install -e '.[sql]'`) provides local loading support;
+the SeBS SQL module packages the function's pinned driver independently.
+
+PostgreSQL also has an AWS EC2 backend managed through the same storage commands.
+See the [SQL benchmark setup guide](sql-postgresql-aws.md) for examples, private
+networking, readiness, normal invocation, cost scope and complete cleanup.
+`configs/storage.json` retains its original object/NoSQL defaults; adding SQL is
+explicit and does not make existing `storage start all` calls provision a database.
+
+`storage stop sql` retains data. AWS stop leaves EBS/endpoint/secret charges;
+`storage remove sql ... --delete-data` removes that deployment. Keep the generated
+attachment and state directory until removal is verified. Database passwords are
+kept in protected private state for Docker or Secrets Manager for AWS, not in the
+benchmark input or public storage attachment.

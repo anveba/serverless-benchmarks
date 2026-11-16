@@ -11,6 +11,7 @@ import glob
 import logging
 import functools
 import os
+from pathlib import Path
 import sys
 import traceback
 from typing import cast, List, Optional
@@ -22,6 +23,7 @@ import sebs
 from sebs import SeBS
 from sebs.sebs_types import Storage as StorageTypes
 from sebs.sebs_types import NoSQLStorage as NoSQLStorageTypes
+from sebs.sebs_types import SQLStorage as SQLStorageTypes
 from sebs.regression import regression_suite
 from sebs.utils import get_project_root, update_nested_dict, append_nested_dict, catch_interrupt
 from sebs.faas import System as FaaSSystem
@@ -565,11 +567,11 @@ def regression(
 
 @cli.group()
 def storage():
-    """Storage management commands for object and NoSQL storage.
+    """Storage management commands for object, NoSQL and SQL storage.
 
     Storage operations have the following characteristics:
-    - Two operations, start and stop.
-    - Three options, object storage, NoSQL storage, and all.
+    - Start/stop plus SQL readiness, preflight and removal.
+    - Object storage, NoSQL, SQL, or all configured backends.
     - Port and additional settings.
 
     Configuration is read from a JSON.
@@ -578,7 +580,7 @@ def storage():
 
 
 @storage.command("start")
-@click.argument("storage", type=click.Choice(["object", "nosql", "all"]))
+@click.argument("storage", type=click.Choice(["object", "nosql", "sql", "all"]))
 @click.argument("config", type=click.Path(dir_okay=False, readable=True))
 @click.option("--output-json", type=click.Path(dir_okay=False, writable=True), default=None)
 @click.option(
@@ -596,7 +598,7 @@ def storage():
     "network interface.",
 )
 def storage_start(storage, config, output_json, remove_containers, external_address):
-    """Start local storage instances (object storage, NoSQL, or both).
+    """Start configured object, NoSQL and SQL storage services.
 
     The written configuration contains two addresses per storage instance: the
     address used by SeBS on this host, and the external address advertised to
@@ -607,8 +609,10 @@ def storage_start(storage, config, output_json, remove_containers, external_addr
 
     sebs.utils.global_logging()
     user_storage_config = json.load(open(config, "r"))
+    if (storage == 'sql' or (storage == 'all' and 'sql' in user_storage_config)) and not output_json:
+        raise click.UsageError('SQL storage requires --output-json to retain lifecycle state')
 
-    if storage in ["object", "all"]:
+    if storage == "object" or (storage == "all" and "object" in user_storage_config):
         storage_type_name = user_storage_config["object"]["type"]
         storage_type_enum = StorageTypes(storage_type_name)
 
@@ -629,7 +633,7 @@ def storage_start(storage, config, output_json, remove_containers, external_addr
     else:
         user_storage_config.pop("object", None)
 
-    if storage in ["nosql", "all"]:
+    if storage == "nosql" or (storage == "all" and "nosql" in user_storage_config):
         storage_type_name = user_storage_config["nosql"]["type"]
         storage_type_enum = NoSQLStorageTypes(storage_type_name)
 
@@ -650,20 +654,40 @@ def storage_start(storage, config, output_json, remove_containers, external_addr
     else:
         user_storage_config.pop("nosql", None)
 
+    if storage == 'sql' or (storage == 'all' and 'sql' in user_storage_config):
+        if not output_json:
+            raise click.UsageError('SQL storage requires --output-json under results/ to retain lifecycle state')
+        storage_type_name = user_storage_config['sql']['type']
+        config_type = sebs.SeBS.get_sql_config_implementation(SQLStorageTypes(storage_type_name))
+        sql_config = config_type.deserialize(user_storage_config['sql'][storage_type_name])
+        if external_address is not None:
+            sql_config.external_host = external_address
+        sql_config.remove_containers = remove_containers
+        storage_type = sebs.SeBS.get_sql_implementation(SQLStorageTypes(storage_type_name))
+        storage_instance = storage_type.deserialize(sql_config)
+        # Persist a usable attachment before waiting on asynchronous cloud startup.
+        from sebs.storage.postgresql import protected_json
+        user_storage_config['sql'][storage_type_name] = storage_instance.serialize()
+        protected_json(Path(output_json),user_storage_config)
+        storage_instance.start()
+        user_storage_config['sql'][storage_type_name] = storage_instance.serialize()
+    else:
+        user_storage_config.pop('sql',None)
+
     if output_json:
         logging.info(f"Writing storage configuration to {output_json}.")
-        with open(output_json, "w") as f:
-            json.dump(user_storage_config, fp=f, indent=2)
+        from sebs.storage.postgresql import protected_json
+        protected_json(Path(output_json),user_storage_config)
     else:
         logging.info("Writing storage configuration to stdout.")
         logging.info(json.dumps(user_storage_config, indent=2))
 
 
 @storage.command("stop")
-@click.argument("storage", type=click.Choice(["object", "nosql", "all"]))
+@click.argument("storage", type=click.Choice(["object", "nosql", "sql", "all"]))
 @click.argument("input-json", type=click.Path(exists=True, dir_okay=False, readable=True))
 def storage_stop(storage, input_json):
-    """Stop local storage instances based on configuration file."""
+    """Stop configured storage services; SQL storage retains its database."""
     sebs.utils.global_logging()
     with open(input_json, "r") as f:
         cfg = json.load(f)
@@ -693,6 +717,49 @@ def storage_stop(storage, input_json):
         )
         storage_instance.stop()
         logging.info(f"Stopped nosql deployment of {storage_type}.")
+
+
+    if storage in ('sql','all') and 'sql' in cfg:
+        storage_type = cfg['sql']['type']
+        config_type = sebs.SeBS.get_sql_config_implementation(SQLStorageTypes(storage_type))
+        implementation = sebs.SeBS.get_sql_implementation(SQLStorageTypes(storage_type))
+        instance = implementation.deserialize(config_type.deserialize(cfg['sql'][storage_type]))
+        logging.info(json.dumps(instance.stop()))
+
+
+@storage.command('preflight')
+@click.argument('storage',type=click.Choice(['sql']))
+@click.option('--region',default='us-east-1',show_default=True)
+def storage_preflight(storage,region):
+    """Read-only AWS account/subnet/AMI checks before starting SQL storage."""
+    from sebs.storage.aws_postgresql import preflight
+    preflight(region)
+
+
+@storage.command('status')
+@click.argument('storage',type=click.Choice(['sql']))
+@click.argument('input-json',type=click.Path(exists=True,dir_okay=False))
+def storage_status(storage,input_json):
+    """Inspect a deployed SQL service without invoking benchmark queries."""
+    cfg=json.loads(Path(input_json).read_text())['sql']
+    implementation=sebs.SeBS.get_sql_implementation(SQLStorageTypes(cfg['type']))
+    config_type=sebs.SeBS.get_sql_config_implementation(SQLStorageTypes(cfg['type']))
+    instance=implementation.deserialize(config_type.deserialize(cfg[cfg['type']]))
+    click.echo(json.dumps(instance.status(),indent=2))
+
+
+@storage.command('remove')
+@click.argument('storage',type=click.Choice(['sql']))
+@click.argument('input-json',type=click.Path(exists=True,dir_okay=False))
+@click.option('--delete-data',is_flag=True,help='Also delete the PostgreSQL database/volume (required on AWS).')
+@click.option('--dry-run',is_flag=True,help='Show the owned resources without removing them.')
+def storage_remove(storage,input_json,delete_data,dry_run):
+    """Remove an owned SQL deployment; stop retains its database."""
+    cfg=json.loads(Path(input_json).read_text())['sql']
+    implementation=sebs.SeBS.get_sql_implementation(SQLStorageTypes(cfg['type']))
+    config_type=sebs.SeBS.get_sql_config_implementation(SQLStorageTypes(cfg['type']))
+    instance=implementation.deserialize(config_type.deserialize(cfg[cfg['type']]))
+    click.echo(json.dumps(instance.remove(delete_data,dry_run),indent=2))
 
 
 @cli.group()
@@ -776,7 +843,8 @@ def start(
         size=benchmark_input_size,
         replace_existing=experiment_config.update_storage,
     )
-    result.set_storage(deployment_client.system_resources.get_storage())
+    if benchmark_obj.uses_storage:
+        result.set_storage(deployment_client.system_resources.get_storage())
     result.add_input(input_config)
 
     function_name = deployment_client.default_function_name(

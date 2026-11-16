@@ -78,3 +78,11 @@ Module contents
    :members:
    :show-inheritance:
    :undoc-members:
+
+
+sebs.faas.sql module
+--------------------
+
+.. automodule:: sebs.faas.sql
+   :members:
+   :show-inheritance:

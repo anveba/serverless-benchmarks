@@ -21,6 +21,7 @@ class BenchmarkModule(str, Enum):
 
     STORAGE = "storage"
     NOSQL = "nosql"
+    SQL = "sql"
 
 
 class Platforms(str, Enum):
@@ -97,6 +98,12 @@ class Language(str, Enum):
     def __str__(self) -> str:
         """String serialization"""
         return self.value
+
+
+class SQLStorage(str, Enum):
+    """Supported self-hosted SQL storage engines."""
+
+    POSTGRESQL = "postgresql"
 
 
 class NoSQLStorage(str, Enum):

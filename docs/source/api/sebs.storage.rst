@@ -51,3 +51,35 @@ Module contents
    :members:
    :show-inheritance:
    :undoc-members:
+
+
+sebs.storage.sql_config module
+------------------------------
+
+.. automodule:: sebs.storage.sql_config
+   :members:
+   :show-inheritance:
+
+
+sebs.storage.postgresql module
+------------------------------
+
+.. automodule:: sebs.storage.postgresql
+   :members:
+   :show-inheritance:
+
+
+sebs.storage.postgresql_loader module
+-------------------------------------
+
+.. automodule:: sebs.storage.postgresql_loader
+   :members:
+   :show-inheritance:
+
+
+sebs.storage.aws_postgresql module
+----------------------------------
+
+.. automodule:: sebs.storage.aws_postgresql
+   :members:
+   :show-inheritance:

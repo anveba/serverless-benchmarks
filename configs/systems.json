@@ -44,6 +44,9 @@
           "module_packages": {
             "nosql": [
               "boto3==1.28.3"
+            ],
+            "sql": [
+              "psycopg[binary]==3.3.9"
             ]
           }
         }
@@ -114,7 +117,11 @@
             "setup.py"
           ],
           "packages": [],
-          "module_packages": {}
+          "module_packages": {
+            "sql": [
+              "psycopg[binary]==3.3.9"
+            ]
+          }
         }
       },
       "nodejs": {
@@ -175,7 +182,7 @@
       },
       "cpp": {
         "base_images": {
-          "x64":{
+          "x64": {
             "all": "amazon/aws-lambda-provided:al2023.2026.02.23.16-x86_64"
           }
         },
@@ -185,12 +192,34 @@
           }
         },
         "dependencies": [
-            "runtime", "sdk", "boost", "hiredis", "opencv", "igraph", "torch", "libjpeg-turbo", "rapidjson"
+          "runtime",
+          "sdk",
+          "boost",
+          "hiredis",
+          "opencv",
+          "igraph",
+          "torch",
+          "libjpeg-turbo",
+          "rapidjson"
         ],
-        "versions": ["all"],
-        "images": ["build"],
+        "versions": [
+          "all"
+        ],
+        "images": [
+          "build"
+        ],
         "deployment": {
-          "files": [ "handler.cpp", "key-value.cpp", "key-value.hpp", "storage.cpp", "storage.hpp", "redis.hpp", "redis.cpp", "utils.cpp", "utils.hpp"]
+          "files": [
+            "handler.cpp",
+            "key-value.cpp",
+            "key-value.hpp",
+            "storage.cpp",
+            "storage.hpp",
+            "redis.hpp",
+            "redis.cpp",
+            "utils.cpp",
+            "utils.hpp"
+          ]
         }
       }
     },
@@ -230,6 +259,9 @@
             ],
             "nosql": [
               "azure-cosmos"
+            ],
+            "sql": [
+              "psycopg[binary]==3.3.9"
             ]
           }
         }
@@ -321,6 +353,9 @@
             ],
             "nosql": [
               "google-cloud-datastore==2.24.0"
+            ],
+            "sql": [
+              "psycopg[binary]==3.3.9"
             ]
           }
         }
@@ -416,6 +451,9 @@
             ],
             "nosql": [
               "boto3==1.28.3"
+            ],
+            "sql": [
+              "psycopg[binary]==3.3.9"
             ]
           }
         }

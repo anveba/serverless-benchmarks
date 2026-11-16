@@ -572,6 +572,8 @@ class Azure(System):
             RuntimeError: If environment variable operations fail.
         """
         envs = env_variables.copy()
+        if code_package.uses_sql:
+            envs.update(self.system_resources.get_sql_storage().envs())
         if code_package.uses_nosql:
 
             nosql_storage = cast(CosmosDB, self._system_resources.get_nosql_storage())

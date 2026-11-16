@@ -14,6 +14,7 @@ Key classes:
 from __future__ import annotations
 
 import base64
+import copy
 import json
 import os
 import time
@@ -389,6 +390,7 @@ class AWSResources(Resources):
         self._docker_password: Optional[str] = password if password != "" else None
         self._container_repository: Optional[str] = None
         self._lambda_role = ""
+        self._function_options: Dict[str, dict] = {}
         self._http_apis: Dict[str, AWSResources.HTTPApi] = {}
         self._function_urls: Dict[str, AWSResources.FunctionURL] = {}
         self._use_function_url: bool = True
@@ -472,6 +474,32 @@ class AWSResources(Resources):
         AWS_IAM requires SigV4 signing, currently not supported.
         """
         self._function_url_auth_type = value
+
+    def function_options(self, benchmark: str) -> dict:
+        """Per-benchmark Lambda networking and environment (use secret ARNs, not values)."""
+        return copy.deepcopy(self._function_options.get(benchmark, {}))
+
+    @staticmethod
+    def validate_function_options(options: dict) -> dict:
+        if not isinstance(options, dict):
+            raise ValueError('function-options must be a benchmark-to-options object')
+        for benchmark, entry in options.items():
+            if not isinstance(benchmark, str) or not isinstance(entry, dict) or set(entry) - {'VpcConfig', 'Environment'}:
+                raise ValueError('Only VpcConfig and Environment are supported in function-options')
+            if 'VpcConfig' in entry:
+                vpc = entry['VpcConfig']
+                if not isinstance(vpc, dict) or set(vpc) != {'SubnetIds', 'SecurityGroupIds'}:
+                    raise ValueError('VpcConfig requires SubnetIds and SecurityGroupIds')
+                for key, prefix in [('SubnetIds', 'subnet-'), ('SecurityGroupIds', 'sg-')]:
+                    if not isinstance(vpc[key], list) or not vpc[key] or any(not isinstance(x, str) or not x.startswith(prefix) for x in vpc[key]):
+                        raise ValueError('Invalid ' + key)
+            if 'Environment' in entry:
+                env = entry['Environment']
+                if not isinstance(env, dict) or set(env) != {'Variables'} or not isinstance(env['Variables'], dict):
+                    raise ValueError('Environment requires Variables')
+                if any(not isinstance(k, str) or not isinstance(v, str) for k, v in env['Variables'].items()):
+                    raise ValueError('Environment variables must be strings')
+        return copy.deepcopy(options)
 
     def lambda_role(self, boto3_session: boto3.session.Session) -> str:
         """Get or create IAM role for Lambda execution.
@@ -1052,6 +1080,7 @@ class AWSResources(Resources):
             ret._container_repository = dct["container_repository"]
 
         ret._lambda_role = dct["lambda-role"] if "lambda-role" in dct else ""
+        ret._function_options = AWSResources.validate_function_options(dct.get("function-options", {}))
         if "http-apis" in dct:
             for key, value in dct["http-apis"].items():
                 ret._http_apis[key] = AWSResources.HTTPApi.deserialize(value)
@@ -1073,6 +1102,7 @@ class AWSResources(Resources):
         out = {
             **super().serialize(),
             "lambda-role": self._lambda_role,
+            "function-options": copy.deepcopy(self._function_options),
             "http-apis": {key: value.serialize() for (key, value) in self._http_apis.items()},
             "function-urls": {
                 key: value.serialize() for (key, value) in self._function_urls.items()
@@ -1105,6 +1135,7 @@ class AWSResources(Resources):
             keys=["aws", "resources", "container_repository"],
         )
         cache.update_config(val=self._lambda_role, keys=["aws", "resources", "lambda-role"])
+        cache.update_config(val=self._function_options, keys=["aws", "resources", "function-options"])
 
         # remove old entries before writing new data.
         cache.remove_config_key(["aws", "resources", "http-apis"])
@@ -1156,6 +1187,12 @@ class AWSResources(Resources):
                 ret.logging_handlers = handlers
                 ret.logging.info("No resources for AWS found, initialize!")
 
+        # Explicit options must override cached endpoints after a database redeployment.
+        supplied = config.get('resources', {})
+        if 'function-options' in supplied:
+            ret._function_options = AWSResources.validate_function_options(supplied['function-options'])
+        if 'lambda-role' in supplied:
+            ret._lambda_role = supplied['lambda-role']
         return ret
 
 

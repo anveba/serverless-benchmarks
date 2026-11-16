@@ -209,3 +209,9 @@ cache
 
 # Local GCP SQL deployment configuration
 /configs/sql-gcp.json
+
+# Local PostgreSQL deployment configuration
+/configs/sql-postgresql-aws.json
+
+# Local PostgreSQL storage settings
+/configs/storage-postgresql-aws.json

@@ -337,7 +337,6 @@ class OpenWhisk(System):
             List of WSK CLI parameter arguments for storage configuration
         """
         envs = []
-
         if self.config.resources.storage_config:
             storage_envs = self.config.resources.storage_config.envs()
             envs = [
@@ -351,6 +350,10 @@ class OpenWhisk(System):
                 "MINIO_STORAGE_CONNECTION_URL",
                 storage_envs["MINIO_ADDRESS"],
             ]
+
+        if code_package.uses_sql:
+            for key, value in self.system_resources.get_sql_storage().envs().items():
+                envs.extend(['-p',key,value])
 
         if code_package.uses_nosql:
             nosql_storage = self.system_resources.get_nosql_storage()

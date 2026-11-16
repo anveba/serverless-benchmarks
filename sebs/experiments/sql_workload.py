@@ -95,8 +95,9 @@ class SqlWorkload(Experiment):
 
     def prepare(self, sebs_client, deployment_client):
         settings = self.config.experiment_settings(self.name())
-        if settings.get("benchmark", "710.sql-query") != "710.sql-query":
-            raise ValueError("sql-workload currently supports only 710.sql-query")
+        benchmark_name = settings.get("benchmark", "710.sql-query")
+        if benchmark_name not in ('710.sql-query', '720.sql-postgresql'):
+            raise ValueError('sql-workload supports 710.sql-query and 720.sql-postgresql')
         self._trace = validate_trace(settings["requests"])
         self._limit = settings.get("max-in-flight", 1)
         if type(self._limit) is not int or self._limit < 1:
@@ -111,7 +112,7 @@ class SqlWorkload(Experiment):
             raise ValueError("Use a fresh output directory; requests.json already exists")
         self._sebs = sebs_client
         self._deployment = deployment_client
-        self._benchmark = sebs_client.get_benchmark("710.sql-query", deployment_client, self.config)
+        self._benchmark = sebs_client.get_benchmark(benchmark_name, deployment_client, self.config)
         self._input = self._benchmark.prepare_input(
             deployment_client.system_resources, size=settings["input-size"],
             replace_existing=self.config.update_storage,
@@ -126,7 +127,7 @@ class SqlWorkload(Experiment):
         sebs_client.cache_client.update_function(self._function)
         triggers = self._function.triggers(trigger_type)
         self._trigger = triggers[0] if triggers else deployment_client.create_trigger(self._function, trigger_type)
-        self._storage = deployment_client.system_resources.get_storage()
+        self._storage = deployment_client.system_resources.get_storage() if self._benchmark.uses_storage else None
         self._settings = settings
 
     def _invoke(self, query):

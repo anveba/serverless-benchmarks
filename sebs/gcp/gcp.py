@@ -2776,6 +2776,8 @@ class GCP(System):
         """
 
         envs = {}
+        if code_package.uses_sql:
+            envs.update(self.system_resources.get_sql_storage().envs())
         if code_package.uses_nosql:
 
             db = (

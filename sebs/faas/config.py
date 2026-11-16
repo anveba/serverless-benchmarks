@@ -110,6 +110,11 @@ class Resources(ABC, LoggingBase):
     - Resource cleanup and deallocation
     """
 
+    @property
+    def sql_storage_config(self):
+        """Configured PostgreSQL service, separately deployed like self-hosted NoSQL."""
+        return self._sql_storage_config
+
     class StorageBucketType(str, Enum):
         """Enumeration of storage bucket types used by SeBS.
 
@@ -149,6 +154,7 @@ class Resources(ABC, LoggingBase):
         """
         super().__init__()
         self._name = name
+        self._sql_storage_config = None
         self._buckets: Dict[Resources.StorageBucketType, str] = {}
         self._resources_id: Optional[str] = None
 
@@ -255,6 +261,10 @@ class Resources(ABC, LoggingBase):
             res: Resources instance to initialize
             dct: Configuration dictionary from cache or user config
         """
+        section = dct.get('sql', dct.get('storage', {}).get('sql'))
+        if section is not None:
+            from sebs.storage.sql_config import sql_config
+            res._sql_storage_config = sql_config(section)
         if "resources_id" in dct:
             res._resources_id = dct["resources_id"]
 
@@ -288,6 +298,8 @@ class Resources(ABC, LoggingBase):
             dict: Serialized resource data including resource ID and bucket mappings
         """
         out = {}
+        if self._sql_storage_config is not None:
+            out['sql'] = {'type':'postgresql','postgresql':self._sql_storage_config.serialize()}
         if self.has_resources_id:
             out["resources_id"] = self.resources_id
         for key, value in self._buckets.items():
@@ -303,6 +315,9 @@ class Resources(ABC, LoggingBase):
         Args:
             cache: Cache instance to update
         """
+        if self._sql_storage_config is not None:
+            cache.update_config(val={'type':'postgresql','postgresql':self._sql_storage_config.serialize()},
+                keys=[self._name,'resources','storage','sql'])
         if self.has_resources_id:
             cache.update_config(
                 val=self.resources_id, keys=[self._name, "resources", "resources_id"]
@@ -433,7 +448,16 @@ class Config(ABC, LoggingBase):
             implementations["openwhisk"] = OpenWhiskConfig.deserialize
         func = implementations.get(name)
         assert func, "Unknown config type!"
-        return func(config[name] if name in config else config, cache, handlers)
+        selected = config[name] if name in config else config
+        ret = func(selected, cache, handlers)
+        cached = cache.get_config(name) or {}
+        section = selected.get('storage',{}).get('sql', selected.get('resources',{}).get('sql'))
+        if section is None:
+            section = cached.get('resources',{}).get('storage',{}).get('sql')
+        if section is not None:
+            from sebs.storage.sql_config import sql_config
+            ret.resources._sql_storage_config = sql_config(section)
+        return ret
 
     @abstractmethod
     def serialize(self) -> dict:

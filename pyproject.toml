@@ -71,6 +71,7 @@ dependencies = [
 
 # True Optional dependencies (Only installed if explicitly requested)
 [project.optional-dependencies]
+sql = ["psycopg[binary]==3.3.9"]
 dev = [
     "flake8",
     "black==22.8.0",
@@ -128,7 +129,7 @@ packages = [
 [tool.setuptools.package-data]
 # Include all necessary non-Python files
 sebs = ["py.typed"]
-"sebs.configs" = ["systems.json"]
+"sebs.configs" = ["systems.json", "storage-postgresql*.json", "sql-postgresql-*.example.json"]
 "sebs.benchmarks" = [
     "**/*.py",
     "**/*.js",

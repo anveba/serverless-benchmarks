@@ -26,6 +26,7 @@ import subprocess
 import socket
 
 import docker
+from sebs.utils import get_resource_path
 
 from sebs.cache import Cache
 from sebs.config import SeBSConfig
@@ -340,6 +341,9 @@ class Local(System):
             storage_envs = self.config.resources.storage_config.envs(external=use_external_storage)
             environment = {**storage_envs, **environment}
 
+        if code_package.uses_sql:
+            environment.update(self.system_resources.get_sql_storage().envs(external=False))
+
         if code_package.uses_nosql:
             nosql_storage = self.system_resources.get_nosql_storage()
             environment = {**environment, **nosql_storage.envs(external=use_external_storage)}
@@ -367,6 +371,11 @@ class Local(System):
             "detach": True,
             # "tty": True,
         }
+        if code_package.language == Language.PYTHON:
+            # Use this checkout's runner, including timing fixes, with cached run images.
+            runner = str(get_resource_path('dockerfiles','local','python','server.py'))
+            container_kwargs['volumes'][runner] = {'bind':'/sebs/server.py','mode':'ro'}
+
         if self.enforce_limits:
             # Follows AWS Lambda, where CPU allocation is proportional to memory.
             memory = code_package.benchmark_config.memory
@@ -580,6 +589,21 @@ class Local(System):
         self.cache_client.update_function(function)
         return trigger
 
+    def delete_function(self, func_name: str, function: Dict) -> None:
+        """Remove the cached local function container through normal SeBS cleanup."""
+        try:
+            container = self._docker_client.containers.get(function['instance_id'])
+            auto_remove = container.attrs.get('HostConfig',{}).get('AutoRemove',False)
+            container.stop(timeout=0)
+            if not auto_remove:
+                try:
+                    container.remove(force=True)
+                except docker.errors.NotFound:
+                    pass
+        except docker.errors.NotFound:
+            pass
+        self.config.resources.allocated_ports.discard(function.get('port'))
+
     def cached_function(self, function: Function) -> None:
         """Handle cached function setup.
 
@@ -589,6 +613,16 @@ class Local(System):
             function: Cached function instance
         """
         pass
+
+    def is_configuration_changed(self, cached_function: Function, benchmark: Benchmark) -> bool:
+        changed = super().is_configuration_changed(cached_function,benchmark)
+        if benchmark.uses_sql:
+            expected = self.system_resources.get_sql_storage().envs(external=False)
+            container = cast(LocalFunction,cached_function).container
+            container.reload()
+            current = dict(value.split('=',1) for value in container.attrs.get('Config',{}).get('Env',[]) if '=' in value)
+            changed = changed or any(current.get(key) != value for key,value in expected.items())
+        return changed
 
     def can_reuse_cached_function(
         self, cached_function: Function, benchmark: Benchmark
@@ -625,6 +659,9 @@ class Local(System):
         Raises:
             RuntimeError: Always raised as configuration updates are not supported
         """
+        if code_package.uses_sql:
+            self.update_function(function,code_package,code_package.system_variant,code_package.container_uri)
+            return
         self.logging.error("Updating function configuration of local deployment is not supported")
         raise RuntimeError("Updating function configuration of local deployment is not supported")
 

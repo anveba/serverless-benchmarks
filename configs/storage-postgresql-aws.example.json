@@ -1,0 +1,15 @@
+{
+  "sql": {
+    "type": "postgresql",
+    "postgresql": {
+      "provider": "aws",
+      "state_dir": "results/postgresql-aws-storage",
+      "region": "us-east-1",
+      "subnet_id": "subnet-REPLACE",
+      "ami_id": "ami-REPLACE",
+      "instance_type": "m7i-flex.large",
+      "cpus": 2,
+      "memory_mb": 6144
+    }
+  }
+}

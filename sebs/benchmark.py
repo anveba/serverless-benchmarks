@@ -14,6 +14,7 @@ import inspect
 import json
 import subprocess
 import os
+from pathlib import Path
 import shutil
 import textwrap
 from abc import abstractmethod
@@ -513,6 +514,11 @@ class Benchmark(LoggingBase):
         return self._uses_nosql
 
     @property
+    def uses_sql(self) -> bool:
+        """Whether input preparation attached a SQL storage backend."""
+        return getattr(self, '_uses_sql', False)
+
+    @property
     def architecture(self) -> str:
         """
         Get the CPU architecture of the deployment target.
@@ -661,6 +667,7 @@ class Benchmark(LoggingBase):
         self._input_processed: bool = False
         self._uses_storage: bool = False
         self._uses_nosql: bool = False
+        self._uses_sql: bool = False
 
     @staticmethod
     def hash_directory(
@@ -731,6 +738,14 @@ class Benchmark(LoggingBase):
                 else:
                     with open(f, "rb") as opened_file:
                         hash_sum.update(opened_file.read())
+        benchmark_config = Path(directory).parent / 'config.json'
+        if language == Language.PYTHON and benchmark_config.exists():
+            with open(benchmark_config) as config_file:
+                needs_sql = 'sql' in json.load(config_file).get('modules', [])
+            if needs_sql:
+                shared = get_resource_path('benchmarks','wrappers','common','python','sql.py')
+                with open(shared, 'rb') as source:
+                    hash_sum.update(source.read())
         return hash_sum.hexdigest()
 
     def serialize(self) -> dict:
@@ -918,6 +933,10 @@ class Benchmark(LoggingBase):
             else:
                 if not os.path.exists(destination):
                     shutil.copy2(file, destination)
+
+        if self.language == Language.PYTHON and BenchmarkModule.SQL in self.benchmark_config.modules:
+            shared = get_resource_path('benchmarks','wrappers','common','python','sql.py')
+            shutil.copy2(shared, os.path.join(output_dir,'sql.py'))
 
     def add_deployment_package_python(self, output_dir: str) -> None:
         """Add Python deployment packages to requirements file.
@@ -1619,6 +1638,18 @@ class Benchmark(LoggingBase):
                 )
             input_kwargs["parameters"] = parameters
 
+        if hasattr(self._benchmark_input_module, 'allocate_sql'):
+            generator = self._benchmark_input_module.generate_input
+            if not {'sql_storage','replace_existing'} <= set(inspect.signature(generator).parameters):
+                raise ValueError('SQL benchmark input generator must accept sql_storage and replace_existing')
+            if BenchmarkModule.SQL not in self.benchmark_config.modules:
+                raise ValueError('allocate_sql requires the sql benchmark module')
+            input_kwargs['sql_storage'] = system_resources.get_sql_storage()
+            input_kwargs['sql_storage'].allocate_benchmark(self.benchmark,
+                self._benchmark_input_module.allocate_sql())
+            input_kwargs['replace_existing'] = replace_existing
+            self._uses_sql = True
+
         if hasattr(self._benchmark_input_module, "buckets_count"):
             buckets = self._benchmark_input_module.buckets_count()
             storage = system_resources.get_storage(replace_existing)
@@ -1846,6 +1877,11 @@ class BenchmarkModuleInterface:
             Tuple[int, int]: Number of (input_buckets, output_buckets) needed
         """
         pass
+
+    @staticmethod
+    def allocate_sql() -> Dict[str, List[str]]:
+        """Optional SQL input hook: table names mapped to primary-key columns."""
+        raise NotImplementedError()
 
     @staticmethod
     @abstractmethod

@@ -86,6 +86,8 @@ class SelfHostedResources(Resources):
             Dict[str, Any]: Serialized configuration containing storage and/or nosql sections
         """
         out: Dict[str, Any] = {}
+        if self._sql_storage_config is not None:
+            out['sql'] = {'type':'postgresql','postgresql':self._sql_storage_config.serialize()}
 
         if self._object_storage is not None:
             out = {**out, "storage": self._object_storage.serialize()}

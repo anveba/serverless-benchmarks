@@ -14,6 +14,7 @@
 | Scientific      | 502.graph-mst    | Python    | x64, arm64 | Minimum spanning tree (MST)  implementation with igraph. |
 | Scientific      | 503.graph-bfs    | Python, C++ | x64, arm64 | Breadth-first search (BFS) implementation with igraph. |
 | Scientific      | 504.dna-visualisation    | Python   | x64, arm64 | Creates a visualization data for DNA sequence. |
+| Analytics      | 720.sql-postgresql | Python | x64 (AWS path) | One SQL query per function, executed on external PostgreSQL. |
 | Analytics      | 710.sql-query    | Python   | x64, arm64 | TPC-H queries with DuckDB over Parquet files in object storage. |
 
 For more details on benchmark selection and their characterization, please refer to [our papers](../README.md#publications). Detailed information about each benchmark can be found in its respective README.md file.

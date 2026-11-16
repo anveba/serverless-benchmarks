@@ -14,6 +14,7 @@ import base64
 import concurrent.futures
 import datetime
 import json
+import time
 from enum import Enum
 from typing import Dict, Optional  # noqa
 
@@ -121,10 +122,14 @@ class LibraryTrigger(Trigger):
             ),
         )
         begin = datetime.datetime.now()
+        elapsed_begin = time.perf_counter_ns()
         ret = client.invoke(FunctionName=self.name, Payload=serialized_payload, LogType="Tail")
+        elapsed_us = (time.perf_counter_ns() - elapsed_begin) // 1000
         end = datetime.datetime.now()
 
         aws_result = ExecutionResult.from_times(begin, end)
+        # Wall timestamps locate cloud logs; elapsed latency must survive clock adjustments.
+        aws_result.times.client = elapsed_us
         aws_result.request_id = ret["ResponseMetadata"]["RequestId"]
         if ret["StatusCode"] != 200:
             self.logging.error("Invocation of {} failed!".format(self.name))
