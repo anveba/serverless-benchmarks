@@ -10,6 +10,11 @@ Azure counterpart: [setup and reproduction](../../docs/sql-azure-setup.md),
 
 Integrated PostgreSQL storage and function-client benchmark: [AWS setup and cleanup](../../docs/sql-postgresql-aws.md).
 It is a separate architecture from the direct EC2/DuckDB comparison below.
+Its optional [AWS evaluation procedures](../../docs/sql-postgresql-evaluation.md),
+[completed results and cleanup](../../handoff/POSTGRESQL_HANDOFF.md) and
+[aggregate evidence](../../handoff/results/postgresql-aws-summary.json) are separate
+from the DuckDB/Athena study. PostgreSQL remains provisioned on both query paths;
+the Lambda frontend does not replace its idle database cost.
 
 ## Recorded experiment and results
 

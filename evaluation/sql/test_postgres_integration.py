@@ -190,6 +190,55 @@ class NativePostgresIntegration(unittest.TestCase):
                 backend = PostgreSQL.deserialize(PostgreSQLConfig.deserialize(attached))
                 backend.remove(delete_data=True)
 
+    def test_covering_index_treatment_preserves_q21_answers_and_removes_only_owned_indexes(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        import psycopg
+        from evaluation.sql.postgres_q21_indexes import INDEXES, REMOTE
+        from sebs.storage.postgresql import protected_json
+
+        remote = self.folder / "remote-index-test"
+        remote.mkdir(exist_ok=True)
+        protected_json(remote / "admin.json", self.storage.admin())
+        event = {**self.event, "queries": ["q21"]}
+        original = self.function.handler(event)
+        payload = {"action": "prepare", "namespace": event["namespace"],
+                   "fingerprint": event["input_fingerprint"], "indexes": INDEXES,
+                   "query": self.function.QUERIES["q21"], "region": "test",
+                   "bucket": "local-test-only", "key": "reports/index.json"}
+        s3 = Mock()
+
+        def execute(action):
+            payload["action"] = action
+            program = REMOTE.replace("__PAYLOAD__", repr(payload)).replace(
+                "/opt/sebs-postgres", str(remote))
+            with patch("boto3.client", return_value=s3), patch(
+                "shutil.disk_usage", return_value=SimpleNamespace(free=16*1024**3)
+            ):
+                exec(compile(program, "local-index-profile", "exec"), {})
+            return json.loads(s3.put_object.call_args.kwargs["Body"])
+
+        try:
+            report = execute("prepare")
+            self.assertEqual(report["benchmark_queries_executed"], 0)
+            self.assertGreater(report["after_table_bytes"]["lineitem"], report["before_table_bytes"]["lineitem"])
+            result = self.function.handler(event)
+            self.assertEqual(result["result"], original["result"])
+            self.assertIsNone(self.input.validate_output(None, event, result, "python"))
+            with psycopg.connect(**self.storage.admin(), autocommit=True) as con:
+                for index in INDEXES:
+                    self.assertIsNotNone(con.execute("SELECT to_regclass(%s)",
+                        (event["namespace"] + "." + index["name"],)).fetchone()[0])
+        finally:
+            execute("remove")
+        with psycopg.connect(**self.storage.admin(), autocommit=True) as con:
+            for index in INDEXES:
+                self.assertIsNone(con.execute("SELECT to_regclass(%s)",
+                    (event["namespace"] + "." + index["name"],)).fetchone()[0])
+            self.assertIsNotNone(con.execute("SELECT to_regclass(%s)",
+                (event["namespace"] + ".lineitem_pkey",)).fetchone()[0])
+        self.assertEqual(self.function.handler(event)["result"], original["result"])
+
     def test_real_sebs_function_build_deployment_and_invocation(self):
         """Exercise actual SeBS packaging and its local HTTP function wrapper."""
         from sebs.sebs import SeBS

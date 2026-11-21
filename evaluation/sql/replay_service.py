@@ -70,7 +70,7 @@ def verify_snapshot(health, trace):
         raise ValueError("Service cache/connection policy differs from the initial comparison policy")
 
 
-def run(trace, client, output_dir):
+def run(trace, client, output_dir, validator=None):
     requests = validate_trace(trace["requests"])
     limit = trace["settings"]["max-in-flight"]
     if type(limit) is not int or limit < 1:
@@ -99,9 +99,12 @@ def run(trace, client, output_dir):
         (output_dir / "responses.json").write_text(json.dumps(responses, indent=2) + "\n")
 
     begin = time.time()
+    started = time.perf_counter()
     outcomes = replay(requests, client.invoke, limit, save)
+    elapsed = time.perf_counter() - started
     end = time.time()
-    validator = load_benchmark_input(str(ROOT / "benchmarks/700.analytics/710.sql-query"))
+    if validator is None:
+        validator = load_benchmark_input(str(ROOT / "benchmarks/700.analytics/710.sql-query"))
     for record, result in outcomes:
         record.update(valid=False, validation_error=None)
         if result is not None and not result.stats.failure:
@@ -123,7 +126,7 @@ def run(trace, client, output_dir):
                "valid": sum(record["valid"] for record in records),
                "execution_failures": sum(record["failure"] for record in records),
                "observation_begin_unix": begin, "observation_end_unix": end,
-               "observation_seconds": end-begin,
+               "observation_seconds": elapsed,
                "cost": None, "cost_note": "Full observation cost not computed; Lambda billing is in responses when returned"}
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     return all(record["valid"] and not record["failure"] for record in records)
