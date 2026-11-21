@@ -1,0 +1,715 @@
+{
+  "benchmark": "720.sql-postgresql",
+  "exported_at": "2026-11-21T17:23:36.731254+00:00",
+  "scope": "Aggregate evidence only; native result files, resource identities and request IDs remain private",
+  "allocation": {
+    "region": "us-east-1",
+    "database_instance_type": "m7i-flex.large",
+    "database_vcpus": 2,
+    "database_host_memory_gib": 8,
+    "postgres_container_memory_mib": 6144,
+    "postgres_container_cpus": 2,
+    "postgresql": "16.16",
+    "psycopg": "3.3.9",
+    "lambda_memory_mib": 512,
+    "lambda_runtime": "python3.12",
+    "lambda_architecture": "x86_64",
+    "driver_instance_type": "m7i-flex.large",
+    "database_disk_gib": 64,
+    "database_disk_iops": 3000,
+    "baseline_throughput_mib_s": 125
+  },
+  "query_ids": [
+    "q6",
+    "q1",
+    "q12",
+    "q3",
+    "q21"
+  ],
+  "baseline_fresh_reuse": {
+    "fresh": {
+      "q6": {
+        "retained_samples": 30,
+        "excluded_initial_samples": 1,
+        "all_retained_warm": true,
+        "mean_aws_execution_s": 0.5574453333333333,
+        "mean_query_fetch_s": 0.5269575069333275,
+        "mean_connect_ms": 22.948178466666985
+      },
+      "q1": {
+        "retained_samples": 30,
+        "excluded_initial_samples": 1,
+        "all_retained_warm": true,
+        "mean_aws_execution_s": 4.332096333333333,
+        "mean_query_fetch_s": 4.302476631066673,
+        "mean_connect_ms": 22.37262873333255
+      },
+      "q12": {
+        "retained_samples": 30,
+        "excluded_initial_samples": 1,
+        "all_retained_warm": true,
+        "mean_aws_execution_s": 1.1324026666666667,
+        "mean_query_fetch_s": 1.1032184838333365,
+        "mean_connect_ms": 21.8614416333556
+      },
+      "q3": {
+        "retained_samples": 30,
+        "excluded_initial_samples": 1,
+        "all_retained_warm": true,
+        "mean_aws_execution_s": 0.7001143333333333,
+        "mean_query_fetch_s": 0.6722526027666808,
+        "mean_connect_ms": 21.69277366665483
+      },
+      "q21": {
+        "retained_samples": 30,
+        "excluded_initial_samples": 1,
+        "all_retained_warm": true,
+        "mean_aws_execution_s": 0.9354853333333334,
+        "mean_query_fetch_s": 0.9066952699333266,
+        "mean_connect_ms": 22.11722436666908
+      }
+    },
+    "reuse": {
+      "q6": {
+        "retained_samples": 30,
+        "excluded_initial_samples": 1,
+        "all_retained_warm": true,
+        "mean_aws_execution_s": 0.5057432666666667,
+        "mean_query_fetch_s": 0.501294506833339,
+        "mean_connect_ms": 0.007080866665395054
+      },
+      "q1": {
+        "retained_samples": 30,
+        "excluded_initial_samples": 1,
+        "all_retained_warm": true,
+        "mean_aws_execution_s": 4.260205333333333,
+        "mean_query_fetch_s": 4.2557159544,
+        "mean_connect_ms": 0.0070840999948510825
+      },
+      "q12": {
+        "retained_samples": 30,
+        "excluded_initial_samples": 1,
+        "all_retained_warm": true,
+        "mean_aws_execution_s": 1.0778373333333333,
+        "mean_query_fetch_s": 1.0733654642000148,
+        "mean_connect_ms": 0.006978133311955996
+      },
+      "q3": {
+        "retained_samples": 30,
+        "excluded_initial_samples": 1,
+        "all_retained_warm": true,
+        "mean_aws_execution_s": 0.6190733333333334,
+        "mean_query_fetch_s": 0.6145324159333162,
+        "mean_connect_ms": 0.0077383000189001905
+      },
+      "q21": {
+        "retained_samples": 30,
+        "excluded_initial_samples": 1,
+        "all_retained_warm": true,
+        "mean_aws_execution_s": 0.8673153333333333,
+        "mean_query_fetch_s": 0.8627184473333045,
+        "mean_connect_ms": 0.006984566675782844
+      }
+    }
+  },
+  "workloads": {
+    "moderate-100-2": {
+      "scale_factor": 1,
+      "max_in_flight": 2,
+      "repetitions_per_backend": 3,
+      "arrival_spacing_s": 2,
+      "backends": {
+        "postgresql": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 2.706382275366723,
+          "median_s": 2.169688154999676,
+          "p95_s": 6.848514429000716,
+          "mean_queue_s": 0.1384121663166934,
+          "mean_run_seconds": 199.48085295533323,
+          "per_query": {
+            "q1": {
+              "requests": 60,
+              "mean_latency_s": 6.793541437833361,
+              "mean_sql_fetch_s": 6.781062371600001
+            },
+            "q12": {
+              "requests": 60,
+              "mean_latency_s": 2.5122836219500946,
+              "mean_sql_fetch_s": 2.4910712182166512
+            },
+            "q21": {
+              "requests": 60,
+              "mean_latency_s": 1.4794245206667105,
+              "mean_sql_fetch_s": 1.2860463491332514
+            },
+            "q3": {
+              "requests": 60,
+              "mean_latency_s": 2.1714462869500344,
+              "mean_sql_fetch_s": 1.6373152522499215
+            },
+            "q6": {
+              "requests": 60,
+              "mean_latency_s": 0.5752155094334133,
+              "mean_sql_fetch_s": 0.5591755160999886
+            }
+          }
+        },
+        "lambda": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 2.734185390436363,
+          "median_s": 2.239873126999555,
+          "p95_s": 6.771953399999802,
+          "mean_queue_s": 0.16210383538966805,
+          "mean_run_seconds": 199.50192660566668,
+          "per_query": {
+            "q1": {
+              "requests": 60,
+              "mean_latency_s": 6.665272123633016,
+              "mean_sql_fetch_s": 6.61617377926667
+            },
+            "q12": {
+              "requests": 60,
+              "mean_latency_s": 2.6347317743163785,
+              "mean_sql_fetch_s": 2.4922406720666603
+            },
+            "q21": {
+              "requests": 60,
+              "mean_latency_s": 1.5123550796330012,
+              "mean_sql_fetch_s": 1.204242306133331
+            },
+            "q3": {
+              "requests": 60,
+              "mean_latency_s": 2.248673735183047,
+              "mean_sql_fetch_s": 1.6392496583000036
+            },
+            "q6": {
+              "requests": 60,
+              "mean_latency_s": 0.6098942394163714,
+              "mean_sql_fetch_s": 0.5581065008000039
+            }
+          },
+          "cold_starts": 2,
+          "billed_gb_seconds": 382.959
+        }
+      }
+    },
+    "burst-100-2-ca-fixed": {
+      "scale_factor": 1,
+      "max_in_flight": 2,
+      "repetitions_per_backend": 3,
+      "arrival_spacing_s": 0,
+      "backends": {
+        "postgresql": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 80.76220927905273,
+          "median_s": 80.31132952249936,
+          "p95_s": 152.2578115109991,
+          "mean_queue_s": 77.5852014917827,
+          "mean_run_seconds": 159.48778759533343,
+          "per_query": {
+            "q1": {
+              "requests": 60,
+              "mean_latency_s": 84.58254048976596,
+              "mean_sql_fetch_s": 8.433094034216689
+            },
+            "q12": {
+              "requests": 60,
+              "mean_latency_s": 79.20950129893275,
+              "mean_sql_fetch_s": 2.5050678155498645
+            },
+            "q21": {
+              "requests": 60,
+              "mean_latency_s": 82.93278198701613,
+              "mean_sql_fetch_s": 2.0232032572500733
+            },
+            "q3": {
+              "requests": 60,
+              "mean_latency_s": 80.8880568062327,
+              "mean_sql_fetch_s": 1.6569587899333784
+            },
+            "q6": {
+              "requests": 60,
+              "mean_latency_s": 76.1981658133161,
+              "mean_sql_fetch_s": 1.1688819730000128
+            }
+          }
+        },
+        "lambda": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 80.78986293320337,
+          "median_s": 80.78264391250013,
+          "p95_s": 151.52896908000002,
+          "mean_queue_s": 77.62955010350335,
+          "mean_run_seconds": 158.57187776333376,
+          "per_query": {
+            "q1": {
+              "requests": 60,
+              "mean_latency_s": 84.49035227464995,
+              "mean_sql_fetch_s": 8.173778262799997
+            },
+            "q12": {
+              "requests": 60,
+              "mean_latency_s": 79.21654646506674,
+              "mean_sql_fetch_s": 2.4769065939666435
+            },
+            "q21": {
+              "requests": 60,
+              "mean_latency_s": 82.99838554433342,
+              "mean_sql_fetch_s": 2.016620211149985
+            },
+            "q3": {
+              "requests": 60,
+              "mean_latency_s": 80.94147157943331,
+              "mean_sql_fetch_s": 1.6681049245666544
+            },
+            "q6": {
+              "requests": 60,
+              "mean_latency_s": 76.30255880253341,
+              "mean_sql_fetch_s": 1.1536102145000038
+            }
+          },
+          "cold_starts": 1,
+          "billed_gb_seconds": 471.261
+        }
+      }
+    },
+    "burst-100-8-ca-fixed": {
+      "scale_factor": 1,
+      "max_in_flight": 8,
+      "repetitions_per_backend": 3,
+      "arrival_spacing_s": 0,
+      "backends": {
+        "postgresql": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 82.77894227793361,
+          "median_s": 82.3889652504995,
+          "p95_s": 155.23646750800071,
+          "mean_queue_s": 70.18849232365694,
+          "mean_run_seconds": 162.21851173466652,
+          "per_query": {
+            "q1": {
+              "requests": 60,
+              "mean_latency_s": 101.6885516917503,
+              "mean_sql_fetch_s": 32.48538887471653
+            },
+            "q12": {
+              "requests": 60,
+              "mean_latency_s": 80.77247267071706,
+              "mean_sql_fetch_s": 10.243129443883511
+            },
+            "q21": {
+              "requests": 60,
+              "mean_latency_s": 81.30304207175017,
+              "mean_sql_fetch_s": 8.445245433866754
+            },
+            "q3": {
+              "requests": 60,
+              "mean_latency_s": 78.26697798223353,
+              "mean_sql_fetch_s": 6.343043027199838
+            },
+            "q6": {
+              "requests": 60,
+              "mean_latency_s": 71.86366697321698,
+              "mean_sql_fetch_s": 5.105809463283307
+            }
+          }
+        },
+        "lambda": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 84.18409126109975,
+          "median_s": 84.57980127349947,
+          "p95_s": 157.91247721400032,
+          "mean_queue_s": 71.45597267192979,
+          "mean_run_seconds": 163.92821386533373,
+          "per_query": {
+            "q1": {
+              "requests": 60,
+              "mean_latency_s": 102.76728707691639,
+              "mean_sql_fetch_s": 32.44835097370001
+            },
+            "q12": {
+              "requests": 60,
+              "mean_latency_s": 82.44213725513312,
+              "mean_sql_fetch_s": 10.38106956258334
+            },
+            "q21": {
+              "requests": 60,
+              "mean_latency_s": 82.89777274118299,
+              "mean_sql_fetch_s": 8.59510993626667
+            },
+            "q3": {
+              "requests": 60,
+              "mean_latency_s": 79.5801896127998,
+              "mean_sql_fetch_s": 6.398291705733334
+            },
+            "q6": {
+              "requests": 60,
+              "mean_latency_s": 73.23306961946643,
+              "mean_sql_fetch_s": 4.986365751150001
+            }
+          },
+          "cold_starts": 9,
+          "billed_gb_seconds": 1904.904
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Selected TPC-H queries, not an official TPC-H benchmark result",
+    "Same external PostgreSQL server on direct and Lambda paths; this does not compare database engines",
+    "Burst queue is primarily driver admission waiting under a configured concurrency cap",
+    "M7i-flex CPU availability and database/OS cache state can vary",
+    "No sparse PostgreSQL workload was measured; the database stays provisioned on both paths",
+    "Three samples per cold/warm condition do not establish tail-latency distributions",
+    "Cost model has explicit exclusions and conditional uptime assumptions; not an invoice"
+  ],
+  "cold_warm": {
+    "scale_factor": 1,
+    "connection_policy": "fresh",
+    "queries": {
+      "q6": {
+        "cold": {
+          "samples": 3,
+          "attempts": 4,
+          "all_attempts_gb_seconds": 5.6805,
+          "aws_execution_s": 2.7638066666666665,
+          "aws_initialization_ms": 77.00666666666667,
+          "query_fetch_s": 0.5382770280000008,
+          "credentials_ms": 1078.6934276666548,
+          "connect_ms": 149.88246700000238
+        },
+        "warm": {
+          "samples": 3,
+          "attempts": 4,
+          "all_attempts_gb_seconds": 1.1635,
+          "aws_execution_s": 0.5802133333333334,
+          "aws_initialization_ms": 0.0,
+          "query_fetch_s": 0.5533188606666689,
+          "credentials_ms": 0.004916666682674986,
+          "connect_ms": 21.92652233334987
+        }
+      },
+      "q1": {
+        "cold": {
+          "samples": 3,
+          "attempts": 4,
+          "all_attempts_gb_seconds": 13.4515,
+          "aws_execution_s": 6.650543333333333,
+          "aws_initialization_ms": 80.05,
+          "query_fetch_s": 4.455190965666669,
+          "credentials_ms": 1077.0070753333343,
+          "connect_ms": 150.0269000000003
+        },
+        "warm": {
+          "samples": 3,
+          "attempts": 4,
+          "all_attempts_gb_seconds": 9.022,
+          "aws_execution_s": 4.51385,
+          "aws_initialization_ms": 0.0,
+          "query_fetch_s": 4.479916961666665,
+          "credentials_ms": 0.004686000001659825,
+          "connect_ms": 28.479885333335158
+        }
+      },
+      "q12": {
+        "cold": {
+          "samples": 3,
+          "attempts": 4,
+          "all_attempts_gb_seconds": 7.1335,
+          "aws_execution_s": 3.4642866666666667,
+          "aws_initialization_ms": 93.65333333333334,
+          "query_fetch_s": 1.1633150216666706,
+          "credentials_ms": 1150.460540333332,
+          "connect_ms": 144.03950799999757
+        },
+        "warm": {
+          "samples": 3,
+          "attempts": 4,
+          "all_attempts_gb_seconds": 2.3385,
+          "aws_execution_s": 1.1648333333333334,
+          "aws_initialization_ms": 0.0,
+          "query_fetch_s": 1.1371911733333349,
+          "credentials_ms": 0.004798000001452844,
+          "connect_ms": 22.76877200000153
+        }
+      },
+      "q3": {
+        "cold": {
+          "samples": 3,
+          "attempts": 4,
+          "all_attempts_gb_seconds": 5.9995,
+          "aws_execution_s": 2.9048,
+          "aws_initialization_ms": 81.33333333333333,
+          "query_fetch_s": 0.7074090449999962,
+          "credentials_ms": 1087.2898869999972,
+          "connect_ms": 145.43543699999617
+        },
+        "warm": {
+          "samples": 3,
+          "attempts": 4,
+          "all_attempts_gb_seconds": 1.4415,
+          "aws_execution_s": 0.7242566666666667,
+          "aws_initialization_ms": 0.0,
+          "query_fetch_s": 0.6923210260000019,
+          "credentials_ms": 0.004645666663805059,
+          "connect_ms": 26.921077333331787
+        }
+      },
+      "q21": {
+        "cold": {
+          "samples": 3,
+          "attempts": 4,
+          "all_attempts_gb_seconds": 6.4704999999999995,
+          "aws_execution_s": 3.1696333333333335,
+          "aws_initialization_ms": 78.67,
+          "query_fetch_s": 0.9427563306666636,
+          "credentials_ms": 1079.1393830000022,
+          "connect_ms": 150.37356133332955
+        },
+        "warm": {
+          "samples": 3,
+          "attempts": 4,
+          "all_attempts_gb_seconds": 1.932,
+          "aws_execution_s": 0.9666633333333333,
+          "aws_initialization_ms": 0.0,
+          "query_fetch_s": 0.9416415203333296,
+          "credentials_ms": 0.004582666671619033,
+          "connect_ms": 20.390859000012068
+        }
+      }
+    },
+    "all_attempts_gb_seconds": 54.633,
+    "database_remained_running": true
+  },
+  "cost_model": {
+    "basis": "Saved current public USD list prices, first paid Lambda tier; no free grants, credits or discounts. Modeled allocated costs; excludes unmetered items and is not an invoice.",
+    "rates": {
+      "gp3_gb_month": {
+        "sku": "JG3KUJMBRGHV3N8G",
+        "usage_type": "EBS:VolumeUsage.gp3",
+        "effective_date": "2026-11-01T00:00:00Z",
+        "unit": "GB-Mo",
+        "usd_per_unit": 0.08,
+        "description": "$0.08 per GB-month of General Purpose (gp3) provisioned storage - US East (N. Virginia)",
+        "rate_code": "JG3KUJMBRGHV3N8G.JRTCKXETXF.6YS6EN2CT7"
+      },
+      "gp3_gibps_month": {
+        "sku": "SQUFRQX4K92S4SBB",
+        "usage_type": "EBS:VolumeP-Throughput.gp3",
+        "effective_date": "2026-11-01T00:00:00Z",
+        "unit": "GiBps-mo",
+        "usd_per_unit": 40.96,
+        "description": "$0.04 per provisioned MiBps-month of gp3 - US East (N. Virginia)",
+        "rate_code": "SQUFRQX4K92S4SBB.JRTCKXETXF.6YS6EN2CT7"
+      },
+      "gp3_iops_month": {
+        "sku": "7Q58NR58VQEASA4W",
+        "usage_type": "EBS:VolumeP-IOPS.gp3",
+        "effective_date": "2026-11-01T00:00:00Z",
+        "unit": "IOPS-Mo",
+        "usd_per_unit": 0.005,
+        "description": "$0.005 per provisioned IOPS-month of gp3 - US East (N. Virginia)",
+        "rate_code": "7Q58NR58VQEASA4W.JRTCKXETXF.6YS6EN2CT7"
+      },
+      "lambda_gb_second": {
+        "sku": "TG3M4CAGBA3NYQBH",
+        "usage_type": "Lambda-GB-Second",
+        "effective_date": "2026-11-01T00:00:00Z",
+        "unit": "Lambda-GB-Second",
+        "usd_per_unit": 1.66667e-05,
+        "description": "AWS Lambda - Total Compute - US East (Northern Virginia)-Tier-1",
+        "rate_code": "TG3M4CAGBA3NYQBH.JRTCKXETXF.CUKFZ388N3"
+      },
+      "lambda_request": {
+        "sku": "GU2ZS9HVP6QTQ7KE",
+        "usage_type": "Request",
+        "effective_date": "2026-11-01T00:00:00Z",
+        "unit": "Requests",
+        "usd_per_unit": 2e-07,
+        "description": "AWS Lambda - Total Requests - US East (Northern Virginia)",
+        "rate_code": "GU2ZS9HVP6QTQ7KE.JRTCKXETXF.6YS6EN2CT7"
+      },
+      "ipv4_hour": {
+        "sku": "4GQUNXTFWVSGPUZK",
+        "usage_type": "USE1-PublicIPv4:InUseAddress",
+        "effective_date": "2026-11-17T00:00:00Z",
+        "unit": "Hrs",
+        "usd_per_unit": 0.005,
+        "description": "$0.005 per In-use public IPv4 address per hour",
+        "rate_code": "4GQUNXTFWVSGPUZK.JRTCKXETXF.6YS6EN2CT7"
+      },
+      "endpoint_hour": {
+        "sku": "EN2N5TATXE673A3B",
+        "usage_type": "USE1-VpcEndpoint-Hours",
+        "effective_date": "2026-11-17T00:00:00Z",
+        "unit": "Hrs",
+        "usd_per_unit": 0.01,
+        "description": "$0.01 per VPC Endpoint Hour",
+        "rate_code": "EN2N5TATXE673A3B.JRTCKXETXF.6YS6EN2CT7"
+      },
+      "secret_month": {
+        "sku": "BJ3PQ9BYGU6P632F",
+        "usage_type": "USE1-AWSSecretsManager-Secrets",
+        "effective_date": "2026-11-01T00:00:00Z",
+        "unit": "Secrets",
+        "usd_per_unit": 0.4,
+        "description": "$0.40 per Secret",
+        "rate_code": "BJ3PQ9BYGU6P632F.JRTCKXETXF.6YS6EN2CT7"
+      },
+      "compute_m7i-flex.large": {
+        "sku": "SD5Q9AZVZ786UZA2",
+        "usage_type": "BoxUsage:m7i-flex.large",
+        "effective_date": "2026-11-01T00:00:00Z",
+        "unit": "Hrs",
+        "usd_per_unit": 0.09576,
+        "description": "$0.09576 per On Demand Linux m7i-flex.large Instance Hour",
+        "rate_code": "SD5Q9AZVZ786UZA2.JRTCKXETXF.6YS6EN2CT7"
+      }
+    },
+    "exclusions": [
+      "Secrets Manager API calls",
+      "PrivateLink data processing",
+      "S3 storage and requests",
+      "CloudWatch logs/metrics/query usage",
+      "network transfer",
+      "other account resources and taxes"
+    ],
+    "workloads": [
+      {
+        "run_id": "moderate-100-2",
+        "backends": {
+          "postgresql": {
+            "queries": 300,
+            "observation_seconds": 598.4425588659997,
+            "native_lambda_gb_seconds": 0.0,
+            "database_compute_disk_ipv4_usd": 0.01793185104473664,
+            "allocated_endpoint_secret_usd": 0.0017546926880330238,
+            "lambda_compute_requests_usd": 0.0,
+            "modeled_subtotal_usd": 0.019686543732769665,
+            "modeled_subtotal_per_100_queries_usd": 0.0065621812442565545,
+            "driver_instrumentation_usd_separate": 0.017303855766914292
+          },
+          "lambda": {
+            "queries": 300,
+            "observation_seconds": 598.5057798170001,
+            "native_lambda_gb_seconds": 382.95900000000006,
+            "database_compute_disk_ipv4_usd": 0.017933745409800503,
+            "allocated_endpoint_secret_usd": 0.0017548780581054014,
+            "lambda_compute_requests_usd": 0.006442662765300001,
+            "modeled_subtotal_usd": 0.026131286233205906,
+            "modeled_subtotal_per_100_queries_usd": 0.008710428744401968,
+            "driver_instrumentation_usd_separate": 0.017305683789004888
+          }
+        }
+      },
+      {
+        "run_id": "burst-100-2-ca-fixed",
+        "backends": {
+          "postgresql": {
+            "queries": 300,
+            "observation_seconds": 478.4633627860003,
+            "native_lambda_gb_seconds": 0.0,
+            "database_compute_disk_ipv4_usd": 0.014336770713801251,
+            "allocated_endpoint_secret_usd": 0.0014029018353293218,
+            "lambda_compute_requests_usd": 0.0,
+            "modeled_subtotal_usd": 0.015739672549130574,
+            "modeled_subtotal_per_100_queries_usd": 0.005246557516376859,
+            "driver_instrumentation_usd_separate": 0.013834679530630755
+          },
+          "lambda": {
+            "queries": 300,
+            "observation_seconds": 475.7156332900013,
+            "native_lambda_gb_seconds": 471.2610000000002,
+            "database_compute_disk_ipv4_usd": 0.014254437204421754,
+            "allocated_endpoint_secret_usd": 0.0013948452210663619,
+            "lambda_compute_requests_usd": 0.007914365708700003,
+            "modeled_subtotal_usd": 0.02356364813418812,
+            "modeled_subtotal_per_100_queries_usd": 0.007854549378062707,
+            "driver_instrumentation_usd_separate": 0.013755229441092741
+          }
+        }
+      },
+      {
+        "run_id": "burst-100-8-ca-fixed",
+        "backends": {
+          "postgresql": {
+            "queries": 300,
+            "observation_seconds": 486.65553520399953,
+            "native_lambda_gb_seconds": 0.0,
+            "database_compute_disk_ipv4_usd": 0.014582242586341079,
+            "allocated_endpoint_secret_usd": 0.0014269220939623444,
+            "lambda_compute_requests_usd": 0.0,
+            "modeled_subtotal_usd": 0.016009164680303424,
+            "modeled_subtotal_per_100_queries_usd": 0.005336388226767808,
+            "driver_instrumentation_usd_separate": 0.014071554679028236
+          },
+          "lambda": {
+            "queries": 300,
+            "observation_seconds": 491.78464159600117,
+            "native_lambda_gb_seconds": 1904.9040000000005,
+            "database_compute_disk_ipv4_usd": 0.014735932143427832,
+            "allocated_endpoint_secret_usd": 0.0014419611404821021,
+            "lambda_compute_requests_usd": 0.031808463496800006,
+            "modeled_subtotal_usd": 0.04798635678070994,
+            "modeled_subtotal_per_100_queries_usd": 0.01599545226023665,
+            "driver_instrumentation_usd_separate": 0.014219861840518449
+          }
+        }
+      }
+    ],
+    "campaign": {
+      "as_of": "2026-11-21T15:49:18.304407+00:00",
+      "components_usd": {
+        "database_continuous_compute_assumption": 10.8920430972262,
+        "database_continuous_current_public_ipv4_assumption": 0.5687157005652778,
+        "database_disk_current_profile": 0.8088391119150617,
+        "driver_continuous_compute_assumption": 2.1285932972262,
+        "driver_continuous_current_public_ipv4_assumption": 0.11114208945416668,
+        "driver_disk_current_profile": 0.07409440963611111,
+        "endpoint_provisioned_hours": 1.1400000000000001,
+        "secret_storage_hours": 0.06333333333333334,
+        "recorded_extra_gp3_throughput": 1.3664236111111112
+      },
+      "modeled_infrastructure_subtotal_usd": 17.153184650467463,
+      "conditional_assumptions": [
+        "Instances continuously running since saved latest LaunchTime; no historical stop/start verification",
+        "Current public IPv4 allocation throughout those running windows",
+        "Current volume profile since creation, plus separately recorded throughput treatment",
+        "30-day month proration; endpoint partial hours rounded up; public list prices, no free tier/credits/discounts"
+      ],
+      "actual_invoice_complete": false,
+      "note": "Includes setup/idle/maintenance/failure wall time under the stated assumptions. Not final cleanup time and not a reconciled invoice. Do not add workload allocation subtotals to this uptime model."
+    },
+    "known_lambda": {
+      "requests_with_native_billing": 1611,
+      "gb_seconds": 4185.5975,
+      "coverage_complete": false,
+      "modeled_subtotal_usd": 0.07008229785325,
+      "note": "Known saved usage only. Deduplicated by AWS request ID, including excluded initial samples and recovered failed-trial reports. Unsaved in-flight/interrupted calls and other account usage may be absent."
+    }
+  },
+  "cleanup": {
+    "checked_at": "2026-11-21T17:13:15.187572+00:00",
+    "all_checked_resources_removed": true,
+    "checked_resource_count": 11,
+    "scope": "Recorded PostgreSQL experiment resources only; other deployments not checked",
+    "archived_native_billing_reports": 1611
+  },
+  "exported_checkout_source_sha256": {
+    "benchmarks/700.analytics/720.sql-postgresql/python/function.py": "9d2ca69a5a97c4cf99c9f771a0956fe775eee5502b02b280aa3c43a35322dbd1",
+    "benchmarks/700.analytics/720.sql-postgresql/python/queries.py": "38074fa356bedd690605b995a7be615fda256c0aa3af12c7a4745dcee961ca78",
+    "benchmarks/wrappers/common/python/sql.py": "8d39d1dcfe56d70b9455af62c99aa44809cd528ff770bc7199bd322685b07193"
+  }
+}

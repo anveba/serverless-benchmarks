@@ -1,214 +1,220 @@
-# PostgreSQL benchmark integration handoff — 2026-11-16
+# PostgreSQL benchmark handoff — 2026-11-21
 
-## Status
+## Current status
 
-`720.sql-postgresql` is integrated with SeBS storage, input preparation, module
-packaging, function deployment, validation, workload replay and cleanup. The
-previous standalone AWS evaluation setup is no longer required to run it.
+`720.sql-postgresql` is integrated into SeBS. Local Docker and AWS Lambda-to-EC2
+PostgreSQL have been exercised end to end. SF1 baselines, paired moderate/burst
+workloads, controlled cold/warm measurements and a cost model are complete for
+the recorded scope. SF10 includes timeouts and a separately tuned Q21 observation.
+No sparse PostgreSQL workload or general distributed query engine was implemented.
 
-Verified: **173 offline tests and 7 real local Docker integration checks pass**.
-The latter include a real SeBS function build, deployment, cold/warm HTTP
-invocations, answer validation, cached function reuse and cleanup. Temporary test
-containers and database volumes were removed. Local tests use SF0.01; their
-latencies are functional test observations, not performance results.
+**Cleanup verified at 2026-11-21 17:13:15 UTC:** both stacks, both EC2 instances,
+their disks, private endpoint, secret, Lambda, benchmark bucket and Lambda log group
+were absent/removed. The final verifier checked 12 recorded resources and archived
+1,611 native billing reports locally. This covers this PostgreSQL experiment;
+other deployments/account resources were not checked. Reproduction needs fresh
+cloud resources and state. Local raw results/cache/state were retained.
 
-AWS provisioning, data loading, Lambda deployment, private PostgreSQL access and
-Q6/SF0.01 answer validation and a ten-request SF0.01 workload have succeeded in
-the user's account. All five query types passed twice. These are functional
-checks, not a comparative workload study. The user ran the cloud
-commands; the agent ran no AWS resource mutations or Git commands.
+- Native benchmark setup from zero: [setup guide](../docs/sql-postgresql-aws.md).
+- Optional comparison, diagnostics, costs and cleanup helpers: [evaluation guide](../docs/sql-postgresql-evaluation.md).
+- Aggregate evidence without cloud identities: [results JSON](results/postgresql-aws-summary.json).
+- Commit preparation: [push instructions](POSTGRESQL_PUSH.md).
 
-Full reproduction and cleanup: [SQL PostgreSQL guide](../docs/sql-postgresql-aws.md).
-Commit paths: [POSTGRESQL_COMMIT_FILES.txt](POSTGRESQL_COMMIT_FILES.txt).
+## What belongs to SeBS
 
-## Architecture and NoSQL parity
+The benchmark selects one complete query, submits it to external PostgreSQL,
+fetches rows and returns results. Q1/Q3/Q6/Q12/Q21 use the same SQL as
+`710.sql-query`. DuckDB generates/validates TPC-H inputs on the host; PostgreSQL
+performs the timed SQL computation. `710.sql-query` instead computes inside the
+function over Parquet. These are different benchmark architectures.
 
-The function selects one approved SQL statement, submits it to PostgreSQL, fetches
-rows and returns results. PostgreSQL stays running outside the function. This is
-the external-database pattern used by `130.crud-api`, not in-function DuckDB.
-
-| Concern | Integration |
+| Concern | Native integration |
 |---|---|
-| Storage lifecycle | `sebs storage start/status/stop/remove sql` |
-| Storage attachment | Existing `--storage-configuration` option and deployment cache |
-| Benchmark declaration | `modules: ["sql"]` and `allocate_sql()` table/key metadata |
-| Input preparation | Generate deterministic TPC-H Parquet, load through SQL backend before timing |
-| Runtime access | Shared `sql` wrapper; no AWS SDK/IAM/provisioning code in benchmark handler |
-| Function lifecycle | Normal SeBS build images, package/function cache, platform deployment and cleanup |
-| Validation | Existing TPC-H reference answers, outside timed workload replay |
-| Experiments | Existing benchmark invoke, perf-cost and sql-workload paths |
+| Storage | `sebs storage start/status/stop/remove sql`; Docker or AWS EC2 provider |
+| Attachment | Standard `--storage-configuration`, serializable config and cache |
+| Declaration | `modules: ["sql"]`, `allocate_sql()` and generic table/key metadata |
+| Preparation | Generate TPC-H, verify file hashes, transactional loading, primary keys, ANALYZE |
+| Runtime | Shared SQL wrapper; fresh/reused connection, cached credentials, verified TLS |
+| Deployment | Normal SeBS build, dependency packaging, source hashing, function cache and adapters |
+| Experiments | Normal benchmark invoke/process/statistics, sql-workload and perf-cost |
+| Validation | Existing query reference answers outside timed replay |
 
-Storage is reusable independently of this benchmark. Docker and AWS EC2 are
-provider implementations of the same PostgreSQL storage interface. The generic
-loader knows table files/keys and metadata; TPC-H query text, scale mapping and
-primary-key declarations stay in the benchmark input/code.
+The generic storage/loader does not contain TPC-H query text. Schemas and content
+fingerprints isolate datasets; changed input within the same identity is rejected
+unless an explicit replacement is requested. No provisioning/loading happens in
+the timed function. AWS roles, private networking and credential references come
+from the storage backend. The database role used by the function is read-only.
+The native benchmark/storage implementation does not import evaluation tooling.
 
-The query set remains Q1/Q3/Q6/Q12/Q21, with the same SQL text as `710.sql-query`.
-Each invocation executes one complete query. No query splitting, shuffle,
-coordinator or multi-Lambda aggregation is included. PostgreSQL may use ordinary
-internal CPU parallelism.
+Framework fixes retained: SQL module packaging/hashing and config injection;
+local SQL-only deployment without an object store; accurate local handler timing;
+AWS private-function role/VPC settings; monotonic SDK invocation timing with no
+automatic retries; reuse of native REPORT metrics with bounded CloudWatch fallback;
+atomic TLS CA publication for concurrent clients; optional SDK perf-cost trigger,
+complete attempt accounting and bounded/fail-fast sampling. Existing perf-cost
+HTTP/default sampling behavior is preserved when the new settings are omitted.
 
-## Important behavior
+Other providers have configuration hooks but no validated PostgreSQL deployment
+path. Do not label Azure/GCP external-PostgreSQL support production-ready.
 
-- Normal input preparation generates and loads data automatically. No local
-  manifest, manual loading command, layer installation or hand-edited Lambda
-  networking/role is required.
-- Each storage/benchmark/input identity has a distinct schema. File-content hashes
-  and metadata define a fingerprint; invocations reject a mismatching dataset.
-- Loading is transactional and protected by a namespace advisory lock. It preserves
-  decimal/date types, verifies hashes/row counts, adds primary keys and runs ANALYZE.
-- `--update-storage` permits replacing changed contents of that owned input schema;
-  other input sizes remain intact.
-- `fresh` opens/closes each database connection; `reuse` keeps one per warm
-  execution environment. Neither is a shared connection pool. Failed queries are
-  never replayed; AWS SDK invocation retries are disabled.
-- Credentials are cached per runtime configuration. AWS secret rotation needs a
-  runtime restart/redeployment before measurement. Prepared-statement auto-caching
-  is disabled; database and OS caches stay enabled.
-- Docker credentials are kept in mode-0600 private state. Public attachment/cache
-  configuration contains state references, not passwords. AWS uses Secrets Manager
-  and verified TLS to a private PostgreSQL endpoint.
-- Docker SQL function containers use the same bridge as the database on WSL and
-  native Linux. Ordinary SQL-only local deployments need no object-storage service.
-- AWS EC2 bootstrap gets a public IPv4 for outbound access, but no public SQL/SSH
-  ingress. Lambda has a private subnet/security group and a read-only database login.
-- The AWS storage stack owns a staging bucket, server, disk, endpoint, secret and
-  roles. Remote loading uses S3/SSM; the measured function does not perform loading.
-  Database-role S3 writes are limited to report objects.
+## Recorded allocation and interpretation
 
-## Framework fixes made during integration
+PostgreSQL 16.16/bookworm, Psycopg 3.3.9; database host m7i-flex.large, 2 vCPUs / 8 GiB;
+container cap 2 CPUs / 6144 MiB; 64 GiB gp3, 3000 IOPS and 125 MiB/s baseline. Lambda used
+Python 3.12/x86-64, 512 MiB. Driver was another m7i-flex.large in the same AZ/subnet.
+Flex CPU availability can vary. Database/OS caches persisted between phases.
 
-1. SQL storage configuration participates in resource serialization and caching.
-   Existing non-SQL benchmark module behavior remains intact.
-2. Shared SQL wrapper code is included in SQL package hashes and copied only for
-   the SQL module; changing it does not invalidate unrelated Python package hashes.
-3. AWS creation/cached updates receive the backend's execution role, VPC and runtime
-   credential reference through SeBS. The backend uses SeBS's configured AWS session.
-4. Local SQL connection settings are reconciled when reusing cached functions.
-   Normal SeBS cleanup now removes local function containers and handles Docker
-   auto-removal without a second conflicting deletion.
-5. Local initialization and deployment serialization support an absent object
-   store, which is needed for SQL-only runs.
-6. The local Python runner's end timestamp now follows `function.handler`.
-   SeBS mounts the current runner source with Python function containers so the
-   fix also applies to previously downloaded run images. A warm-invocation test
-   checks that function duration includes the SQL handler interval.
+The driver submits directly to PostgreSQL or invokes Lambda, which submits the
+same query to the same PostgreSQL server. Admission concurrency is capped at 2 or 8;
+queued requests wait in the driver. End-to-end numbers below include that wait.
+They are not a measurement of unlimited Lambda scale or isolated database CPU.
 
-## Configuration and resource defaults
+## SF1 connection-policy baseline
 
-- PostgreSQL 16.16/bookworm, pinned by image digest; Psycopg 3.3.9.
-- Runtime requires Python 3.10+; tested local function: 3.11/x64. AWS example: 3.12/x64.
-- Docker storage default: 2 CPUs, 4096 MiB, host port 9013 bound to loopback.
-- AWS example: `m7i-flex.large`, 2 CPUs/6144 MiB container, 64 GiB gp3 disk.
-  Flex CPU availability can vary. Availability/quotas are checked in the account.
-- Shared buffers: min(1 GiB, one quarter of configured container memory);
-  work_mem 32 MiB, max_connections 32, max_parallel_workers_per_gather 1.
-- Function default: 512 MiB, 300-second timeout; SQL default statement limit 120 s,
-  configurable up to 240 s. Function and database allocations are independent.
-- AWS bootstrap TLS certificates expire after 30 days; renew/recreate before expiry.
-- `test` SF0.01, `small` SF1, `large` SF10; the existing
-  `SEBS_SQL_SCALE_FACTOR` override also applies.
+31 sequential invocations per query/policy; earliest initial sample excluded from
+statistics, retained for billing. 30 warm samples per cell,300 retained overall.
+All answers validated; reuse flags confirmed reuse. Policies were measured in
+sequence, so cache/time variation can contribute to total timing differences.
 
-## First AWS smoke observation and metrics-collection fix
-
-One cold Q6 at SF0.01 validated successfully. Saved native AWS measurements:
-
-| Measurement | Value |
-|---|---:|
-| AWS execution | 2.229150 s |
-| AWS initialization | 74.420 ms |
-| Function execution | 2.221325 s |
-| Client invocation | 2.806783 s |
-| Billed duration | 2304 ms |
-| Allocated / peak function memory | 512 / 107 MB |
-| Lambda billed GB-seconds | 1.152 |
-| SQL execution plus result fetch | 8.590802 ms |
-| Database connect | 150.653754 ms |
-| Credential lookup | 1069.914676 ms |
-
-The first `benchmark process` failed when its redundant CloudWatch Logs query's
-saved time window was rejected with `MalformedQueryException`. Complete native
-REPORT timing/billing was already in `experiments.json`, returned by SDK invocation.
-The AWS collector now reuses complete saved reports and queries only missing ones.
-The fallback pads the time range, can adjust for an exact new log group's creation
-time, polls Scheduled/Running states correctly and tolerates duplicate REPORTs.
-Authorization/retention failures are not silently hidden. Nine offline regression
-tests cover these paths. The fix was verified on the actual saved smoke record,
-without a CloudWatch call, SQL rerun or measurement-file edits.
-
-The user reran smoke processing successfully, then invoked and processed the
-five-query workload. All ten answers validated (each query twice):
-
-| SF0.01 workload mean | Cold (2 invocations) | Warm (8 invocations) |
+| Query | Fresh AWS execution mean | Reuse AWS execution mean |
 |---|---:|---:|
-| AWS execution | 2.282240 s | 0.049920 s |
-| Function execution | 2.278328 s | 0.047744 s |
-| AWS initialization | 102.080 ms | not reported |
-| SDK client timer (wall clock) | 2.768970 s | 0.616045 s |
+| Q6 | 0.557445s | 0.505743s |
+| Q1 | 4.332096s | 4.260205s |
+| Q12 | 1.132403s | 1.077837s |
+| Q3 | 0.700114s | 0.619073s |
+| Q21 | 0.935485s | 0.867315s |
 
-One warm Q12 recorded 2.211525 s in the SDK wall-clock timer but only
-0.408460 s in the workload's monotonic service timer. The roughly 1.8-second
-wall-clock discontinuity inflated the client mean. Keep the original files; do
-not substitute corrected measurements. The SDK trigger now measures elapsed
-latency with `perf_counter_ns`, retaining wall timestamps for cloud log lookup.
-An offline regression checks forward and backward clock adjustments. The
-workload's monotonic warm service latencies were 0.374–0.429 s after rounding.
-AWS execution/billing measurements are unaffected. This small run does not
-isolate query type, database cache effects or connection policy.
+Fresh connection setup averaged 21.7–22.9 ms; reused setup about 0.007 ms. WSL client
+latencies are excluded from end-to-end conclusions; use cloud-driver evidence.
 
-Next run the same ten-request workload at SF1 (`small`), then connection-policy
-and larger workload experiments. There are no PostgreSQL comparative cost/latency
-tables yet.
+## Main paired SF1 workloads
 
-## Next live step
+Each row pools 3 runs of 100 requests per backend. Moderate spacing is 2 s; burst
+requests all arrive at 0 s. Query cycle Q6, Q1, Q12, Q3, Q21. Connections are fresh.
+All 1,800 requests in these three paired studies validated, with no execution failures.
+Both corrected bursts use the same runtime sources and database/input profile.
 
-From the active checkout, with AWS credentials set:
+| Workload | Path | Mean | Median | p95 | Mean admission queue |
+|---|---|---:|---:|---:|---:|
+| Moderate, 2 slots | Direct PostgreSQL | 2.706s | 2.170s | 6.849s | 0.138s |
+| Moderate, 2 slots | Lambda→PostgreSQL | 2.734s | 2.240s | 6.772s | 0.162s |
+| Burst, 2 slots | Direct PostgreSQL | 80.762s | 80.311s | 152.258s | 77.585s |
+| Burst, 2 slots | Lambda→PostgreSQL | 80.790s | 80.783s | 151.529s | 77.630s |
+| Burst, 8 slots | Direct PostgreSQL | 82.779s | 82.389s | 155.236s | 70.188s |
+| Burst, 8 slots | Lambda→PostgreSQL | 84.184s | 84.580s | 157.912s | 71.456s |
 
-```bash
-sebs storage preflight sql --region us-east-1
-```
+| Workload | Lambda cold starts | Lambda billed GB-seconds |
+|---|---:|---:|
+| Moderate, 2 slots | 2 | 382.959 |
+| Burst, 2 slots | 1 | 471.261 |
+| Burst, 8 slots | 9 | 1904.904 |
 
-For a fresh deployment, copy/fill `configs/storage-postgresql-aws.example.json`
-and follow the guide. For the existing deployment, proceed to SF1 using the same
-SQL storage attachment and cache, with a fresh workload output directory. Retain
-state and cache until cleanup.
-There are no PostgreSQL cloud latency/cost tables to report yet.
+Eight slots gave no useful completion-time improvement and about 4.04× Lambda
+billed usage compared with the matched two-slot burst. Requests spent less time
+waiting for admission but more time after dispatch. This supports a shared server
+capacity limit; latency alone does not identify CPU versus I/O as the bottleneck.
+Medians/p95 are descriptive pooled values, not independent confidence intervals.
 
-A fair comparison must include database uptime/idle costs, disk, IPv4, private
-endpoint, secrets/staging/log costs as applicable, plus Lambda. PostgreSQL native
-row storage/indexes differ from DuckDB Parquet scans. Keep engine allocations,
-connection/cache policy and driver location explicit. First terminal-driven runs
-are smoke tests; cloud-driver performance comparisons follow live validation.
+## Controlled cold/warm SF1
 
-## Cleanup contract
+Fresh connections, 512 MiB; 3 cold and 3 warm samples per query, 30 retained. PostgreSQL
+stayed running while SeBS forced fresh Lambda environments. All recorded answers
+validated. All attempts including initial samples consumed 54.633 GB-seconds.
 
-`storage stop sql` retains the database. Docker's remove-containers option may
-remove the stopped container while retaining its named volume/private state.
-AWS stop stops EC2 only; EBS/endpoint/secret costs remain.
+| Query | Cold AWS execution | Warm AWS execution | Cold init | SQL cold/warm |
+|---|---:|---:|---:|---:|
+| Q6 | 2.764s | 0.580s | 77.0ms | 0.538/0.553s |
+| Q1 | 6.651s | 4.514s | 80.0ms | 4.455/4.480s |
+| Q12 | 3.464s | 1.165s | 93.7ms | 1.163/1.137s |
+| Q3 | 2.905s | 0.724s | 81.3ms | 0.707/0.692s |
+| Q21 | 3.170s | 0.967s | 78.7ms | 0.943/0.942s |
 
-Use the dedicated SeBS cache to preview/remove function resources, then
-`sebs storage remove sql STORAGE.json --delete-data --dry-run` and the real removal.
-AWS removal refuses functions still using its role and draining Lambda interfaces;
-keep the role intact and retry after those interfaces are gone. Confirm
-`DELETE_COMPLETE`. Local results, ordinary SeBS S3 buckets and CloudWatch logs are
-separate from the storage stack and must be retained/cleaned intentionally.
+Initialization is separate from AWS execution. Cold execution added about 2.2 s;
+credential lookup accounted for 1.08–1.15 s and connection setup 144–150 ms, versus
+20–29ms connect when warm. The reported components do not explain every remaining
+millisecond. Warm does not imply a reused connection under the fresh policy.
+Three samples per condition characterize typical times, not reliable tail latency.
+The interrupted earlier ten-repetition job remains a separate failed trial.
 
-## Verification commands
+## SF10 limits and separate Q21 treatment
 
-The main offline checks are documented in the guide. The comprehensive recorded
-run included SQL, existing AWS/Azure/GCP SQL adapters/evaluation, credential/resource
-regressions and the AWS library-trigger tests: 173 passing tests.
+These are individual observations, not a replicated SF10 performance distribution.
+Default primary-key schema and 120 s statement limit: Q1, Q12, Q3 validated with AWS
+execution 113.331 s, 116.049 s, 108.936 s; Q6/Q21 reached the statement deadline. At a
+later 240 s limit, Q6 validated at 59.379 s AWS / 57.277 s SQL, while Q21 still timed out.
+The later Q6 result reflects run variation, not a speedup caused by raising a limit.
 
-```bash
-python -B -m unittest tests.test_sql_storage tests.test_sql_postgresql \
-  tests.test_aws_function_options tests.test_sql_query tests.test_sql_workload -q
+Increasing gp3 throughput alone from 125 to 500 MiB/s did not complete Q21 within 240 s.
+A separate covering-index/VACUUM/ANALYZE treatment then completed Q21 with the same
+SQL/data at 65.372 s SQL, 67.519 s AWS, 33.794 GB-seconds. It used 500 MiB/s during that run.
+Index preparation took 68.441 s and added about 2.42 GiB. Original timed-out, billed
+runs remain separate; censored timeouts do not establish an exact speedup ratio.
+The disk was restored to 125 MiB/s before the paired SF1 studies; indexes were only
+on the SF10 schema. They are not benchmark defaults.
 
-SEBS_TEST_POSTGRES_DOCKER=1 python -B -m unittest \
-  evaluation.sql.test_postgres_integration -v
-```
+## Costs
 
-The opt-in integration run has seven checks: five query answers, data reuse/input
-isolation, read-only/mismatch handling, actual SeBS function build/invocation/cache
-and warm timing, connection reuse, stop/restart, and actual storage CLI lifecycle.
-Other FaaS adapters have SQL environment wiring, but no Azure/GCP/OpenWhisk live
-PostgreSQL deployment has been validated. The current cloud deployment target is AWS.
+Public USD list-price allocation model, no credits, free tiers or discounts.
+Database compute/disk/IPv4 and amortized endpoint/secret allocation are included
+on both paths. Lambda adds native compute and requests. Driver instrumentation
+is separate. The report includes rate units, SKU/effective dates and exclusions.
+
+| Workload | Direct PostgreSQL USD/100 | Lambda→PostgreSQL USD/100 |
+|---|---:|---:|
+| Moderate, 2 slots | 0.006562 | 0.008710 |
+| Burst, 2 slots | 0.005247 | 0.007855 |
+| Burst, 8 slots | 0.005336 | 0.015995 |
+
+A separate conditional infrastructure model was 17.1532 USD through the
+2026-11-21 15:49:18 UTC inventory snapshot. It assumes continuous compute/current
+IPv4 allocation since saved latest launch times, current disks and the recorded
+throughput treatment. It is not a final cleanup total or a reconciled invoice.
+Known saved Lambda billing: 1,611 unique requests, 4,185.5975 GB-seconds, 0.070082 USD;
+coverage remains explicitly incomplete as campaign accounting. Do not add workload
+allocation costs to the campaign uptime model; they overlap.
+
+Unmetered/excluded: Secrets API calls, endpoint data, S3 storage/requests, logs/
+monitoring, network transfer, taxes and unrelated account resources. Monthly
+allocation uses a declared 30-day month; the recorded windows are in November.
+This report does not establish exact account charges.
+
+Unlike the DuckDB Lambda-versus-EC2 engine-placement study, a Lambda frontend
+leaves PostgreSQL provisioned on both paths. Sparse requests cannot remove its
+idle database cost. No sparse PostgreSQL traffic study was performed. Direct
+client here is the driver, not an application VM that Lambda replaces.
+
+## Corrections and preserved failed trials
+
+- Initial paired Lambda responses were lost to a client REPORT-parser error.
+  Native logs showed completed invocations. The parser now trims whitespace and
+  preserves returned rows if meter parsing fails; failed-trial billing is retained.
+- Two concurrent direct Q12 requests failed during the original eight-slot burst.
+  A non-atomic shared CA file could be read at zero bytes. Atomic publication now
+  prevents partial reads; the 24-connection probe and 1,200 matched burst requests
+  passed after the fix. Original failed runs remain in raw results.
+- Changed local Parquet bytes triggered the loader's fingerprint guard during a
+  runtime redeploy. Original frozen objects were restored, not relabeled/replaced.
+- Interrupted calls are not retried automatically. Sampling and SSM submissions
+  retain checkpoints so an ambiguous response cannot silently repeat SQL.
+
+## Validation and review scope
+
+Latest offline checks: 63 SeBS/storage/runtime/SDK/metrics/perf-cost tests passed;
+80 evaluation tests passed with 8 opt-in Docker tests skipped. Two aggregate-export checks passed for identity redaction and refusing incomplete
+cleanup; 14 shared evaluation client/replay checks also passed.
+Earlier recorded real local Docker checks passed all 8 tests, including actual
+function build/deployment/invocation, all five answers, reuse and cleanup. Docker
+checks were not rerun during commit preparation; no new AWS runs or Git commands
+were executed by the agent. No runtime/database allocation was changed for push.
+
+Commit 1 contains native SeBS integration, generic framework fixes/tests, examples,
+setup documentation and this aggregate handoff/results artifact. Commit 2 contains
+optional AWS experiment helpers/tests and their reproduction guide. Detailed
+resource state, credentials, generated configs, datasets, archives and raw results
+remain ignored. The commit lists are file scopes, not a Git diff; review staged
+hunks because existing shared files can contain other contributors' changes.
+
+Remaining follow-ups are optional: more repetitions, a controlled sparse study,
+validated PostgreSQL deployment on other providers, stronger resource bottleneck
+attribution, and actual-invoice reconciliation. None requires keeping this deleted
+AWS deployment alive. Do not resume old launch state as if resources still exist.

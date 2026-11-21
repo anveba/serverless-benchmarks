@@ -96,3 +96,9 @@ Creates a visualization data for DNA sequence. [Details →](../benchmarks/500.s
 ### 710.sql-query - SQL Query
 
 Run TPC-H queries with DuckDB over Parquet files in object storage, on one function or in parallel over several. [Details →](../benchmarks/700.analytics/710.sql-query/README.md)
+
+### 720.sql-postgresql - External PostgreSQL
+
+One approved analytical SQL query per function invocation, executed on a separate
+PostgreSQL service. Uses native SeBS SQL storage lifecycle, input preparation,
+function packaging, validation and metrics. [Details →](../benchmarks/700.analytics/720.sql-postgresql/README.md)

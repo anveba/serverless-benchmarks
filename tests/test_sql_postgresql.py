@@ -1,12 +1,17 @@
 """PostgreSQL benchmark and shared runtime checks, without network or databases."""
 import datetime
 import decimal
+from concurrent.futures import ThreadPoolExecutor
 import importlib.util
 import json
 import os
 from pathlib import Path
 import sys
+import shutil
+import ssl
+import subprocess
 import tempfile
+from threading import Event, Barrier
 import types
 import unittest
 from unittest.mock import MagicMock, Mock, patch
@@ -347,6 +352,84 @@ class CredentialsTests(unittest.TestCase):
             settings, hit = wrapper.sql().credentials()
         self.assertEqual(settings["host"], "172.17.0.2")
         aws.assert_not_called()
+
+
+@unittest.skipUnless(shutil.which("openssl"), "OpenSSL is needed for real CA-reader checks")
+class AtomicCertificateTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.certificates = tempfile.TemporaryDirectory(prefix="sebs-ca-fixture-")
+        root = Path(cls.certificates.name)
+        subprocess.run([
+            "openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
+            "-keyout", str(root / "key.pem"), "-out", str(root / "ca.pem"),
+            "-subj", "/CN=SeBS disposable test CA", "-addext", "basicConstraints=critical,CA:TRUE",
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        cls.pem = (root / "ca.pem").read_text()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.certificates.cleanup()
+
+    def verify_ca(self, path):
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.load_verify_locations(cafile=str(path))
+
+    def test_previous_ca_remains_readable_while_replacement_waits_to_publish(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder) / "ca.crt"
+            target.write_text(self.pem)
+            waiting, publish = Event(), Event()
+            replace = os.replace
+            def delayed_replace(source, destination):
+                waiting.set()
+                if not publish.wait(timeout=5):
+                    raise TimeoutError("Test publication did not resume")
+                replace(source, destination)
+            with patch.object(wrapper.os, "replace", side_effect=delayed_replace):
+                with ThreadPoolExecutor(max_workers=1) as pool:
+                    future = pool.submit(wrapper._publish_ca, target, self.pem + "\n")
+                    try:
+                        self.assertTrue(waiting.wait(timeout=5))
+                        self.assertEqual(target.read_text(), self.pem)
+                        self.verify_ca(target)
+                    finally:
+                        publish.set()
+                    future.result(timeout=5)
+            self.assertEqual(target.read_text(), self.pem + "\n")
+            self.verify_ca(target)
+            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(list(Path(folder).iterdir()), [target])
+
+    def test_failed_publication_keeps_good_ca_and_removes_partial_temporary_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder) / "ca.crt"
+            target.write_text(self.pem)
+            with patch.object(wrapper.os, "replace", side_effect=PermissionError("fixture")):
+                with self.assertRaises(PermissionError):
+                    wrapper._publish_ca(target, self.pem + "\n")
+            self.assertEqual(target.read_text(), self.pem)
+            self.verify_ca(target)
+            self.assertEqual(list(Path(folder).iterdir()), [target])
+
+    def test_eight_writers_do_not_expose_partial_pem_to_real_ssl_readers(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder) / "ca.crt"
+            target.write_text(self.pem)
+            barrier = Barrier(9)
+            def writer():
+                barrier.wait(timeout=5)
+                for _ in range(10):
+                    wrapper._publish_ca(target, self.pem)
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                futures = [pool.submit(writer) for _ in range(8)]
+                barrier.wait(timeout=5)
+                for _ in range(80):
+                    self.verify_ca(target)
+                for future in futures:
+                    future.result(timeout=5)
+            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(list(Path(folder).iterdir()), [target])
 
 
 if __name__ == "__main__":

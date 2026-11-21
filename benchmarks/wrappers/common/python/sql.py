@@ -8,11 +8,28 @@ import os
 from pathlib import Path
 import re
 from threading import Lock
+import tempfile
 import time
 
 import psycopg
 
 NAMESPACE = re.compile(r"sebs_[a-z0-9_]{1,58}")
+
+
+def _publish_ca(path, pem):
+    """Publish complete CA files atomically for concurrent clients on one host."""
+    fd, temporary = tempfile.mkstemp(prefix=path.name + ".", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w") as output:
+            output.write(pem)
+        # The temporary file is mode 0600, complete and closed before publication.
+        # A reader sees either the previous certificate or the complete new one.
+        os.replace(temporary, path)
+    finally:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
 
 
 def json_value(value):
@@ -74,9 +91,7 @@ class sql:
             cert = Path("/tmp") / (
                 "sebs-sql-" + hashlib.sha256(raw.encode()).hexdigest() + ".crt"
             )
-            fd = os.open(cert, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-            with os.fdopen(fd, "w") as output:
-                output.write(value["ca_pem"])
+            _publish_ca(cert, value["ca_pem"])
             settings = {
                 k: value[k] for k in ("host", "port", "dbname", "user", "password")
             }

@@ -1,8 +1,9 @@
 # 720.sql-postgresql — external SQL database
 
-**Category:** Analytics. **Language:** Python. **Validated deployment path:** local
-Docker (all five queries) and AWS (Q6/SF0.01 smoke). The full AWS workload study
-remains to run.
+**Category:** Analytics. **Language:** Python. **Validated deployments:** local
+Docker and AWS Lambda with self-hosted PostgreSQL on EC2. All five queries passed
+SF1 validation and measured workload replay. SF10 includes separate timeout and
+index-tuning observations; it is not a replicated SF10 performance study.
 
 A function executes one complete TPC-H query on external PostgreSQL and returns
 its result. The database stores native tables and performs the SQL computation.
@@ -56,3 +57,8 @@ Compare full architecture costs: function invocations plus PostgreSQL provisioni
 idle time, disk and applicable endpoint/secret/storage/network costs. PostgreSQL on
 EC2 remains provisioned between requests. Resource allocations, row storage/indexes,
 Parquet scans and driver placement must be explicit in comparisons.
+
+Recorded AWS results and limitations: [PostgreSQL handoff](../../../handoff/POSTGRESQL_HANDOFF.md).
+Native benchmark setup requires no evaluation helper. The optional cloud driver,
+resource diagnostics, tuning and cost/reporting tools are documented separately in
+the [evaluation guide](../../../docs/sql-postgresql-evaluation.md).

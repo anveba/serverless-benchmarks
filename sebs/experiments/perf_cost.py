@@ -117,6 +117,9 @@ class PerfCost(Experiment):
         """
         # Create benchmark instance
         settings = self.config.experiment_settings(self.name())
+        trigger_type = Trigger.TriggerType.get(settings.get("trigger", "http"))
+        if trigger_type not in (Trigger.TriggerType.HTTP, Trigger.TriggerType.LIBRARY):
+            raise ValueError("perf-cost supports http or library triggers")
         self._benchmark = sebs_client.get_benchmark(
             settings["benchmark"], deployment_client, self.config
         )
@@ -131,11 +134,11 @@ class PerfCost(Experiment):
         # Get or create function
         self._function = deployment_client.get_function(self._benchmark)
 
-        # Add HTTP trigger if not already present
-        triggers = self._function.triggers(Trigger.TriggerType.HTTP)
+        # HTTP remains the default; SDK invocation can reuse a private deployment.
+        triggers = self._function.triggers(trigger_type)
         if len(triggers) == 0:
             self._trigger = deployment_client.create_trigger(
-                self._function, Trigger.TriggerType.HTTP
+                self._function, trigger_type
             )
         else:
             self._trigger = triggers[0]
@@ -266,6 +269,12 @@ class PerfCost(Experiment):
         error_count = 0
         incorrect_count = 0
         colds_count = 0
+        record_attempts = settings.get("record-attempts", False)
+        fail_on_error = settings.get("fail-on-error", False)
+        max_attempts = settings.get("max-attempts")
+        if max_attempts is not None and (type(max_attempts) is not int or max_attempts < 1):
+            raise ValueError("max-attempts must be a positive integer")
+        attempts = []
         with open(os.path.join(self._out_dir, file_name), "w") as out_f:
             samples_gathered = 0
             client_times = []
@@ -274,6 +283,24 @@ class PerfCost(Experiment):
                 result.begin()
                 samples_generated = 0
 
+                def persist():
+                    result.end()
+                    statistics = {
+                        "samples_generated": samples_gathered,
+                        "invocation_attempts": samples_generated,
+                        "failures": error_executions,
+                        "failures_count": error_count,
+                        "incorrect": incorrect_executions,
+                        "incorrect_count": incorrect_count,
+                        "cold_count": colds_count,
+                    }
+                    if record_attempts:
+                        statistics["attempts"] = attempts
+                    out_f.seek(0)
+                    out_f.truncate()
+                    out_f.write(serialize({**json.loads(serialize(result)), "statistics": statistics}))
+                    out_f.flush()
+
                 # Warm up container
                 # For "warm" runs, we do it automatically by pruning cold results
                 if run_type == PerfCost.RunType.SEQUENTIAL:
@@ -281,6 +308,9 @@ class PerfCost(Experiment):
 
                 first_iteration = True
                 while samples_gathered < repetitions:
+                    if max_attempts is not None and samples_generated + invocations > max_attempts:
+                        persist()
+                        raise RuntimeError("perf-cost reached max-attempts before gathering the requested samples")
 
                     if run_type == PerfCost.RunType.COLD or run_type == PerfCost.RunType.BURST:
                         self._deployment_client.enforce_cold_start(
@@ -298,9 +328,17 @@ class PerfCost(Experiment):
                         )
 
                     incorrect = []
+                    samples_generated += invocations
                     for res in results:
+                        attempt = {"warmup": first_iteration, "result": None}
+                        if record_attempts:
+                            attempts.append(attempt)
                         try:
                             ret = res.get()
+                            attempt["result"] = ret
+                            if fail_on_error and ret.stats.failure:
+                                result.add_invocation(self._function, ret)
+                                raise RuntimeError("perf-cost invocation failed; stopping without retry")
                             if first_iteration:
                                 continue
                             if run_type == PerfCost.RunType.COLD and not ret.stats.cold_start:
@@ -316,7 +354,10 @@ class PerfCost(Experiment):
                         except Exception as e:
                             error_count += 1
                             error_executions.append(str(e))
-                    samples_generated += invocations
+                            attempt["error"] = str(e)
+                            if fail_on_error:
+                                persist()
+                                raise
                     if first_iteration:
                         self.logging.info(
                             f"Processed {invocations} warm-up samples, ignoring these results."
@@ -334,24 +375,12 @@ class PerfCost(Experiment):
                         incorrect_count += len(incorrect)
 
                     time.sleep(5)
+                    if record_attempts:
+                        persist()
 
                 result.end()
                 self.compute_statistics(client_times)
-                out_f.write(
-                    serialize(
-                        {
-                            **json.loads(serialize(result)),
-                            "statistics": {
-                                "samples_generated": samples_gathered,
-                                "failures": error_executions,
-                                "failures_count": error_count,
-                                "incorrect": incorrect_executions,
-                                "incorrect_count": incorrect_count,
-                                "cold_count": colds_count,
-                            },
-                        }
-                    )
-                )
+                persist()
 
     def run_configuration(self, settings: dict, repetitions: int, suffix: str = "") -> None:
         """Run experiments for each configured experiment type.

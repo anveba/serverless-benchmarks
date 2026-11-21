@@ -11,11 +11,11 @@ attaches the storage supplied through `--storage-configuration`; input generatio
 prepares its tables before deploying/invoking the function. There is no separate
 dataset manifest, manual loading command or evaluation script to run.
 
-The implemented storage providers are Docker and AWS EC2. Local Docker provides
-an end-to-end integration check. The first AWS Q6/SF0.01 invocation has passed
-answer validation; the full AWS query workload and cost study remain to run. Other FaaS
-adapters can inject SQL settings, but their network/deployment paths have not been
-validated for this benchmark.
+The implemented storage providers are Docker and AWS EC2. Local Docker and AWS
+Lambda have been exercised end to end. All five query
+types passed at SF1; SF10 includes recorded timeout and separate tuning results.
+Other FaaS adapters can inject SQL settings, but their network/deployment paths
+have not been validated for this benchmark.
 
 Handoff/status: [POSTGRESQL_HANDOFF.md](../handoff/POSTGRESQL_HANDOFF.md).
 
@@ -23,13 +23,14 @@ Handoff/status: [POSTGRESQL_HANDOFF.md](../handoff/POSTGRESQL_HANDOFF.md).
 
 Run commands from the repository root, in the checkout containing this benchmark.
 Use the existing [SeBS AWS setup](sql-aws-setup.md) for Docker and AWS credentials.
-For a new environment:
+For a new environment (Python 3.10+ and a working Docker installation):
 
 ```bash
 python3 -m venv python-venv
 source python-venv/bin/activate
 python -m pip install -e '.[sql]'
 sebs --help
+unset SEBS_SQL_SCALE_FACTOR
 docker info --format 'Docker: {{.ServerVersion}} | {{.OSType}}/{{.Architecture}}'
 ```
 
@@ -42,8 +43,8 @@ SQL inside the PostgreSQL benchmark's function.
 
 **WSL only:** if PATH selects a broken Docker Desktop shim, use the working Docker
 CLI/integration described in the base setup guide. SQL function and database
-containers use the same Docker bridge, including on WSL. The remaining steps are
-platform-independent.
+containers use the same Docker bridge, including on WSL. The remaining commands
+apply to Linux generally; AWS steps require an AWS account.
 
 ## Local deployment
 
@@ -247,29 +248,33 @@ not make both engines perform identical physical work.
 Count Lambda **plus** database uptime/idle periods, EBS, IPv4, the private endpoint,
 Secrets Manager, staging S3 and applicable logs/network costs. This PostgreSQL
 server is continuously provisioned; a Lambda frontend does not make its database
-serverless. Actual dollar-cost evaluation follows the first AWS run.
+serverless. The recorded cost model includes the database on both paths and reports its
+assumptions and exclusions in the handoff.
+
+## Framework perf-cost options
+
+The native perf-cost experiment accepts `trigger: "library"` for the AWS SDK;
+its default remains HTTP. Optional `record-attempts: true` saves initial and
+classification-excluded invocations for billing, `fail-on-error: true` stops on
+execution errors, and `max-attempts` bounds classification resampling. Existing
+experiments retain their default behavior. The saved statistics distinguish
+retained sample count from invocation attempt count. Cold classification refers
+to the function environment; it does not reset PostgreSQL or its caches.
 
 ## Cleanup
 
-The SQL storage service is independently owned, like ScyllaDB. Benchmark completion
-does not stop or delete it. Preserve state/results until cleanup is verified.
+Keep the storage attachment and dedicated cache until cleanup is verified.
+`storage stop sql` retains the database. On AWS, stopping EC2 still retains the
+disk, endpoint and secret, so use removal to finish the deployment.
 
-Stopping retains data:
-
-```bash
-sebs storage stop sql results/postgresql-storage.json
-```
-
-For AWS use `results/postgresql-aws-storage.json`. Stopping AWS only stops EC2;
-EBS, Secrets Manager and the endpoint remain billable. To end the experiment,
-remove the functions using the dedicated cache first:
+Preview the dedicated deployment, then remove its resources through SeBS:
 
 ```bash
-sebs resources cleanup --resource-type functions --dry-run \
+sebs resources cleanup --dry-run \
   --config configs/sql-postgresql-aws.example.json --deployment aws \
   --cache cache-postgresql-aws --output-dir results/postgresql-cleanup-preview
 
-sebs resources cleanup --resource-type functions \
+sebs resources cleanup \
   --config configs/sql-postgresql-aws.example.json --deployment aws \
   --cache cache-postgresql-aws --output-dir results/postgresql-cleanup-functions
 
@@ -278,55 +283,55 @@ sebs storage remove sql results/postgresql-aws-storage.json --delete-data
 sebs storage status sql results/postgresql-aws-storage.json
 ```
 
-Inspect the function dry run: it must contain only this experiment's functions.
-The database stack removal refuses attached Lambda functions and draining Lambda
-network interfaces; keep the role intact and retry after AWS removes the interfaces.
-Removal deletes the database, disk, staging bucket/contents, endpoint, secret and
-roles. Confirm `DELETE_COMPLETE`; `DELETE_FAILED` requires inspecting its events.
-The ordinary SeBS bucket/cache, local results and CloudWatch logs are separate;
-retain or clean them through SeBS when no other experiment needs them.
+Require the dry run to identify only the dedicated experiment. Full SeBS cleanup
+removes the cached function together with its logs and ordinary benchmark bucket.
+The SQL storage stack separately owns the PostgreSQL server, disk, staging bucket,
+endpoint, secret and roles. Removal destroys its database. Confirm DELETE_COMPLETE.
+If Lambda network interfaces are still draining, keep their role and retry SQL
+removal after AWS releases them. If the function was removed in an earlier separate
+command, its log group may need a separate exact-name cleanup because the cached
+function entry is already gone. The evaluation guide provides a billing-report
+archive and final verification helper for that case.
 
-Locally, use the local config/cache to clean functions, then:
+For local storage use the local example/cache and clean local function deployments
+through SeBS, then run:
 
 ```bash
 sebs storage remove sql results/postgresql-storage.json --delete-data --dry-run
 sebs storage remove sql results/postgresql-storage.json --delete-data
 ```
 
-Without `--delete-data`, Docker removal retains its named data volume; keep the
-private state to reuse it. AWS requires explicit `--delete-data` to remove its stack.
+Preserve local result files for analysis. If using the optional cloud driver,
+collect all results and delete its separate stack before removing SQL storage;
+see the evaluation guide. Other experiments/deployments are outside this cleanup.
 
-## Implementation and tests
+## Implementation and checks
 
 | Location | Responsibility |
 |---|---|
 | `sebs/faas/sql.py` | SQL storage interface |
-| `sebs/storage/sql_config.py` | Public PostgreSQL configuration |
-| `sebs/storage/postgresql.py` | Storage lifecycle, ownership, dataset manifests and provider dispatch |
-| `sebs/storage/postgresql_loader.py` | Generic atomic Parquet-to-PostgreSQL loading |
-| `sebs/storage/aws_postgresql*.py` | AWS provisioning, bootstrap, S3/SSM transport and teardown |
-| `benchmarks/wrappers/common/python/sql.py` | Shared runtime credentials/connections/query measurements |
-| `720.sql-postgresql/input.py` | TPC-H generation, table/key definitions, preparation and validation |
-| `720.sql-postgresql/python/function.py` | Select one approved query and format its result |
-| `sebs/benchmark.py`, platform adapters | SQL input hook, module packaging and runtime settings |
+| `sebs/storage/sql_config.py` | Serializable SQL configuration |
+| `sebs/storage/postgresql.py` | Docker lifecycle, attachment and dataset identity |
+| `sebs/storage/postgresql_loader.py` | Transactional loading, types, keys and hashes |
+| `sebs/storage/aws_postgresql*.py` | AWS provisioning, bootstrap, S3/SSM loading and removal |
+| `benchmarks/wrappers/common/python/sql.py` | Credentials, verified TLS, fresh/reused connections and timings |
+| `720.sql-postgresql/input.py` | TPC-H generation, table declarations and validation |
+| `720.sql-postgresql/python/function.py` | Select one approved query and return its rows |
+| SeBS deployment adapters and packaging | Inject SQL configuration and package the shared runtime |
 
-The old `evaluation.sql.postgres_aws` preflight import remains for compatibility;
-the benchmark/storage backend does not depend on evaluation code.
+The benchmark and storage implementation do not import evaluation code. AWS SDK
+invocation uses monotonic client timing and disables automatic retries. Native
+REPORTs returned by SDK invocations are reused by metrics processing; missing
+reports use CloudWatch. Runtime CA certificates are published atomically so
+concurrent clients cannot read a partially written certificate file.
+
+Offline checks (normally a few seconds, no cloud calls or Docker):
 
 ```bash
 python -B -m unittest tests.test_sql_storage tests.test_sql_postgresql \
-  tests.test_aws_function_options tests.test_sql_query tests.test_sql_workload -q
-
-SEBS_TEST_POSTGRES_DOCKER=1 python -B -m unittest \
-  evaluation.sql.test_postgres_integration -v
+  tests.test_aws_function_options tests.test_sql_workload tests.test_perf_cost_sdk \
+  tests.aws.test_library_trigger tests.aws.test_metrics -q
 ```
 
-The local Python runner includes the full handler call in its function duration;
-SeBS mounts the current runner source when starting Python containers so this
-fix also applies with previously downloaded runtime images.
-
-The opt-in integration test generates SF0.01, creates temporary local Docker
-resources, validates all five answers, checks namespace separation/read-only
-access/connection reuse, builds and invokes a real SeBS local function, and removes
-its containers and volume. It makes no AWS calls. It needs the `sql` host extra,
-Docker access and access to the pinned images/packages.
+Reproduction and optional diagnostics: [AWS PostgreSQL evaluation](sql-postgresql-evaluation.md).
+Results, limitations and cleanup: [handoff](../handoff/POSTGRESQL_HANDOFF.md).
