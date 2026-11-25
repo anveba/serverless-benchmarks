@@ -1,0 +1,706 @@
+{
+  "provider": "azure",
+  "region": "swedencentral",
+  "configuration": {
+    "database_vm": "Standard_D2s_v5",
+    "database_vcpus": 2,
+    "database_memory_gib": 8,
+    "container_cpus": 2,
+    "container_memory_mib": 6144,
+    "os_disk_gib": 64,
+    "os_disk_sku": "StandardSSD_LRS",
+    "function_hosting": "Flex Consumption, on demand, zero always ready",
+    "function_memory_mib": 512,
+    "function_python": "3.11",
+    "psycopg": "3.3.9",
+    "driver_vm": "Standard_D2s_v5",
+    "database_access": "private, verified TLS, read-only role",
+    "query_ids": [
+      "q6",
+      "q1",
+      "q12",
+      "q3",
+      "q21"
+    ]
+  },
+  "sf1_baselines": {
+    "input_size": "small",
+    "invocations_per_cell": 31,
+    "cells": {
+      "fresh/q6": {
+        "warm": {
+          "samples": 23,
+          "function_s": 0.6014395217391304,
+          "provider_s": null,
+          "sql_s": 0.5691060086086973,
+          "connect_ms": 27.65410069565509,
+          "credential_ms": 0.006921782602623115,
+          "connections_reused": 0
+        },
+        "cold": {
+          "samples": 7,
+          "function_s": 1.3183891428571428,
+          "provider_s": null,
+          "sql_s": 0.5688053451428507,
+          "connect_ms": 27.402712857155265,
+          "credential_ms": 495.92048771427244,
+          "connections_reused": 0
+        },
+        "all_attempts": 31
+      },
+      "fresh/q1": {
+        "warm": {
+          "samples": 27,
+          "function_s": 4.876186259259259,
+          "provider_s": 4.8813389259259266,
+          "sql_s": 4.841918138037046,
+          "connect_ms": 28.756465592580213,
+          "credential_ms": 0.006407481491890023,
+          "connections_reused": 0
+        },
+        "cold": {
+          "samples": 3,
+          "function_s": 5.560903,
+          "provider_s": 5.578906666666667,
+          "sql_s": 4.842429284999999,
+          "connect_ms": 25.369798333334376,
+          "credential_ms": 475.98562266663674,
+          "connections_reused": 0
+        },
+        "all_attempts": 31
+      },
+      "fresh/q12": {
+        "warm": {
+          "samples": 29,
+          "function_s": 1.2345520689655172,
+          "provider_s": 1.2390045172413793,
+          "sql_s": 1.2029638407586414,
+          "connect_ms": 26.50188679308485,
+          "credential_ms": 0.0057896551570122716,
+          "connections_reused": 0
+        },
+        "cold": {
+          "samples": 1,
+          "function_s": 1.969553,
+          "provider_s": null,
+          "sql_s": 1.1979728050000062,
+          "connect_ms": 32.17469000000506,
+          "credential_ms": 512.6895010000112,
+          "connections_reused": 0
+        },
+        "all_attempts": 31
+      },
+      "fresh/q3": {
+        "warm": {
+          "samples": 29,
+          "function_s": 0.7523095862068966,
+          "provider_s": null,
+          "sql_s": 0.7186220897586287,
+          "connect_ms": 29.271164275860624,
+          "credential_ms": 0.007279448278370245,
+          "connections_reused": 0
+        },
+        "cold": {
+          "samples": 1,
+          "function_s": 1.468963,
+          "provider_s": 1.491099,
+          "sql_s": 0.6950922820000187,
+          "connect_ms": 31.42104999994899,
+          "credential_ms": 487.74883499993393,
+          "connections_reused": 0
+        },
+        "all_attempts": 31
+      },
+      "fresh/q21": {
+        "warm": {
+          "samples": 30,
+          "function_s": 1.017077,
+          "provider_s": null,
+          "sql_s": 0.986219300400008,
+          "connect_ms": 26.800150433340757,
+          "credential_ms": 0.005526733339896357,
+          "connections_reused": 0
+        },
+        "cold": {
+          "samples": 0
+        },
+        "all_attempts": 31
+      },
+      "reuse/q6": {
+        "warm": {
+          "samples": 30,
+          "function_s": 0.5481369,
+          "provider_s": 0.5521824000000001,
+          "sql_s": 0.5388544902999949,
+          "connect_ms": 5.961244266664305,
+          "credential_ms": 0.005186699998679008,
+          "connections_reused": 23
+        },
+        "cold": {
+          "samples": 0
+        },
+        "all_attempts": 31
+      },
+      "reuse/q1": {
+        "warm": {
+          "samples": 29,
+          "function_s": 4.794989103448276,
+          "provider_s": null,
+          "sql_s": 4.791332056827606,
+          "connect_ms": 0.012141551729686837,
+          "credential_ms": 0.005055206903809198,
+          "connections_reused": 29
+        },
+        "cold": {
+          "samples": 1,
+          "function_s": 5.558784,
+          "provider_s": 5.57655,
+          "sql_s": 4.832493469999974,
+          "connect_ms": 27.787077000027693,
+          "credential_ms": 461.23410999996395,
+          "connections_reused": 0
+        },
+        "all_attempts": 31
+      },
+      "reuse/q12": {
+        "warm": {
+          "samples": 28,
+          "function_s": 1.1766940357142857,
+          "provider_s": null,
+          "sql_s": 1.1701885918214328,
+          "connect_ms": 0.007342928565127035,
+          "credential_ms": 0.009128678560240846,
+          "connections_reused": 28
+        },
+        "cold": {
+          "samples": 2,
+          "function_s": 2.0406234999999997,
+          "provider_s": 2.062177,
+          "sql_s": 1.2070021794999661,
+          "connect_ms": 29.24246149996179,
+          "credential_ms": 552.9905934999988,
+          "connections_reused": 0
+        },
+        "all_attempts": 31
+      },
+      "reuse/q3": {
+        "warm": {
+          "samples": 29,
+          "function_s": 0.6982526551724137,
+          "provider_s": 0.7051170344827586,
+          "sql_s": 0.6951879312068937,
+          "connect_ms": 0.007289827588716309,
+          "credential_ms": 0.0076622413832316445,
+          "connections_reused": 29
+        },
+        "cold": {
+          "samples": 1,
+          "function_s": 1.548744,
+          "provider_s": 1.564961,
+          "sql_s": 0.7491044979999515,
+          "connect_ms": 30.24403999995684,
+          "credential_ms": 551.6053449999845,
+          "connections_reused": 0
+        },
+        "all_attempts": 31
+      },
+      "reuse/q21": {
+        "warm": {
+          "samples": 30,
+          "function_s": 0.951399,
+          "provider_s": 0.9558974333333333,
+          "sql_s": 0.9481595854333288,
+          "connect_ms": 0.00705340000877186,
+          "credential_ms": 0.00860343331699672,
+          "connections_reused": 30
+        },
+        "cold": {
+          "samples": 0
+        },
+        "all_attempts": 31
+      }
+    },
+    "scope": "Native function and SQL timings; local client excluded from cloud latency comparisons",
+    "sampling": "Initial invocation excluded; cold samples retained separately; warm counts are observed"
+  },
+  "sf1_controlled_cold_warm": {
+    "queries": {
+      "q6": {
+        "cold": {
+          "samples": 3,
+          "attempts": 4,
+          "function_s": 1.6545386666666666,
+          "provider_s": null,
+          "sql_s": 0.5771711839999512,
+          "credentials_ms": 794.6647526666197,
+          "connect_ms": 31.537946666693035
+        },
+        "warm": {
+          "samples": 3,
+          "attempts": 7,
+          "function_s": 0.6157153333333333,
+          "provider_s": null,
+          "sql_s": 0.5767209829999919,
+          "credentials_ms": 0.006566666646297866,
+          "connect_ms": 32.40692300001532
+        }
+      },
+      "q1": {
+        "cold": {
+          "samples": 3,
+          "attempts": 4,
+          "function_s": 5.657955666666667,
+          "provider_s": null,
+          "sql_s": 4.815188415666682,
+          "credentials_ms": 542.6023813333435,
+          "connect_ms": 40.47090900000209
+        },
+        "warm": {
+          "samples": 3,
+          "attempts": 6,
+          "function_s": 4.893418,
+          "provider_s": null,
+          "sql_s": 4.864250492666656,
+          "credentials_ms": 0.006966666660446208,
+          "connect_ms": 25.63598433334846
+        }
+      },
+      "q12": {
+        "cold": {
+          "samples": 3,
+          "attempts": 4,
+          "function_s": 2.153148333333333,
+          "provider_s": null,
+          "sql_s": 1.2417528016666683,
+          "credentials_ms": 615.581743000007,
+          "connect_ms": 31.995631666679476
+        },
+        "warm": {
+          "samples": 3,
+          "attempts": 5,
+          "function_s": 1.2696916666666667,
+          "provider_s": null,
+          "sql_s": 1.2316830066666853,
+          "credentials_ms": 0.005900000019209983,
+          "connect_ms": 34.433949333314715
+        }
+      },
+      "q3": {
+        "cold": {
+          "samples": 3,
+          "attempts": 4,
+          "function_s": 1.5119013333333333,
+          "provider_s": null,
+          "sql_s": 0.7285201669999992,
+          "credentials_ms": 445.02989966669776,
+          "connect_ms": 35.26026866668038
+        },
+        "warm": {
+          "samples": 3,
+          "attempts": 6,
+          "function_s": 0.7738266666666667,
+          "provider_s": null,
+          "sql_s": 0.715175343999988,
+          "credentials_ms": 0.006833333316080825,
+          "connect_ms": 53.487757999979145
+        }
+      },
+      "q21": {
+        "cold": {
+          "samples": 3,
+          "attempts": 4,
+          "function_s": 1.7533936666666667,
+          "provider_s": null,
+          "sql_s": 1.003115048999992,
+          "credentials_ms": 502.6600336666623,
+          "connect_ms": 29.138737333312292
+        },
+        "warm": {
+          "samples": 3,
+          "attempts": 6,
+          "function_s": 1.037963,
+          "provider_s": null,
+          "sql_s": 0.9995777256666637,
+          "credentials_ms": 0.006833666674310734,
+          "connect_ms": 34.71711033334183
+        }
+      }
+    },
+    "all_attempts": 50,
+    "scope": "Native function and SQL timings; local client excluded from cloud latency comparisons"
+  },
+  "sf10_single_observations": {
+    "q6": {
+      "state": "complete",
+      "valid": true,
+      "scale_factor": 10,
+      "statement_timeout_ms": 240000,
+      "function_s": 116.32852139799999,
+      "sql_s": 115.71384170900001,
+      "connect_ms": 25.04373700000429,
+      "credentials_ms": 586.3778819999936,
+      "scope": "Separate longer-limit validation; Blob receipt overhead excluded from SQL handler timing",
+      "treatment": "default index profile"
+    },
+    "q21": {
+      "state": "complete",
+      "valid": true,
+      "scale_factor": 10,
+      "statement_timeout_ms": 240000,
+      "function_s": 170.85123505499996,
+      "sql_s": 170.25012748500012,
+      "connect_ms": 24.491638000654348,
+      "credentials_ms": 573.4679500001221,
+      "scope": "Single-observation SF10 validation at the recorded deadline; Blob overhead excluded from SQL handler timing",
+      "treatment": "two additional Q21 indexes"
+    },
+    "q1": {
+      "state": "complete",
+      "valid": true,
+      "scale_factor": 10,
+      "statement_timeout_ms": 240000,
+      "function_s": 132.95639295299998,
+      "sql_s": 132.36659656000006,
+      "connect_ms": 32.510418999891044,
+      "credentials_ms": 546.6023000001314,
+      "scope": "Single-observation SF10 validation at the recorded deadline; Blob overhead excluded from SQL handler timing",
+      "treatment": "default index profile"
+    },
+    "q12": {
+      "state": "complete",
+      "valid": true,
+      "scale_factor": 10,
+      "statement_timeout_ms": 240000,
+      "function_s": 181.630771885,
+      "sql_s": 181.080036629,
+      "connect_ms": 28.738608999958615,
+      "credentials_ms": 517.245255999967,
+      "scope": "Single-observation SF10 validation at the recorded deadline; Blob overhead excluded from SQL handler timing",
+      "treatment": "default index profile"
+    },
+    "q3": {
+      "state": "complete",
+      "valid": true,
+      "scale_factor": 10,
+      "statement_timeout_ms": 240000,
+      "function_s": 167.24913879399992,
+      "sql_s": 166.6815509219996,
+      "connect_ms": 27.566298999772698,
+      "credentials_ms": 535.9838029999082,
+      "scope": "Single-observation SF10 validation at the recorded deadline; Blob overhead excluded from SQL handler timing",
+      "treatment": "default index profile"
+    }
+  },
+  "q21_index_preparation": {
+    "elapsed_seconds": 377.57206470600795,
+    "added_index_bytes": 2596061184,
+    "benchmark_sql_changed": false,
+    "note": "Single-observation indexed treatment; preparation excluded from handler/query time."
+  },
+  "paired_studies": {
+    "moderate-100-2": {
+      "workload": "moderate",
+      "max_in_flight": 2,
+      "repetitions": 3,
+      "backends": {
+        "postgresql": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 3.0140429281500913,
+          "median_s": 2.3477064230000906,
+          "p95_s": 7.483178020000196,
+          "queue_mean_s": 0.20313551200674435,
+          "mean_run_duration_s": 199.9744162979999,
+          "cold_starts": null
+        },
+        "functions": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 3.230839061933375,
+          "median_s": 2.5056823229997462,
+          "p95_s": 7.521114533999935,
+          "queue_mean_s": 0.26706457526338456,
+          "mean_run_duration_s": 200.0262132033334,
+          "cold_starts": 19
+        }
+      }
+    },
+    "burst-100-2": {
+      "workload": "burst",
+      "max_in_flight": 2,
+      "repetitions": 3,
+      "backends": {
+        "postgresql": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 86.96651774596748,
+          "median_s": 86.64871915900585,
+          "p95_s": 163.43767079200188,
+          "queue_mean_s": 83.54858135498735,
+          "mean_run_duration_s": 171.69016471666205,
+          "cold_starts": null
+        },
+        "functions": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 89.07975640004253,
+          "median_s": 89.48946913349937,
+          "p95_s": 165.94788243700168,
+          "queue_mean_s": 85.61400645779625,
+          "mean_run_duration_s": 174.0855199846701,
+          "cold_starts": 20
+        }
+      }
+    },
+    "burst-100-8": {
+      "workload": "burst",
+      "max_in_flight": 8,
+      "repetitions": 3,
+      "backends": {
+        "postgresql": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 88.64851096097797,
+          "median_s": 89.37185739900451,
+          "p95_s": 166.2858976580028,
+          "queue_mean_s": 75.22205161710203,
+          "mean_run_duration_s": 173.3209813543314,
+          "cold_starts": null
+        },
+        "functions": {
+          "requests": 300,
+          "valid": 300,
+          "failures": 0,
+          "mean_s": 89.46137397318311,
+          "median_s": 90.79366989250411,
+          "p95_s": 167.6346159560053,
+          "queue_mean_s": 76.00200942511016,
+          "mean_run_duration_s": 174.0446218949995,
+          "cold_starts": 32
+        }
+      }
+    }
+  },
+  "compute_cost_model": {
+    "scope": "Measured-window VM compute plus native Flex execution/requests, before free grants/credits. Same PostgreSQL server cost in both paths. Driver compute separate. Not an invoice or full infrastructure total.",
+    "attribution": "Minute buckets and matching counts; assumes no unrelated executions in those buckets. Current app configuration is not historical billing evidence.",
+    "excluded": [
+      "OS/data disks and transactions",
+      "public IP and network transfer",
+      "Key Vault and API operations",
+      "Blob storage/operations",
+      "monitoring/logs",
+      "setup, inter-run idle and failed attempts outside these windows",
+      "taxes"
+    ],
+    "meter_source": "https://learn.microsoft.com/en-us/azure/azure-functions/monitor-functions-reference",
+    "rates": {
+      "server": {
+        "usd_per_unit": 0.102,
+        "records": [
+          {
+            "currencyCode": "USD",
+            "tierMinimumUnits": 0.0,
+            "retailPrice": 0.102,
+            "unitPrice": 0.102,
+            "armRegionName": "swedencentral",
+            "location": "SE Central",
+            "effectiveStartDate": "2022-01-01T00:00:00Z",
+            "meterId": "b9263a62-8f85-5f2d-971a-8c15198bfba0",
+            "meterName": "D2s v5",
+            "productId": "DZH318Z08M9W",
+            "skuId": "DZH318Z08M9W/01JW",
+            "productName": "Virtual Machines Dsv5 Series",
+            "skuName": "Standard_D2s_v5",
+            "serviceName": "Virtual Machines",
+            "serviceId": "DZH313Z7MMC8",
+            "serviceFamily": "Compute",
+            "unitOfMeasure": "1 Hour",
+            "type": "Consumption",
+            "isPrimaryMeterRegion": true,
+            "armSkuName": "Standard_D2s_v5"
+          }
+        ]
+      },
+      "driver": {
+        "usd_per_unit": 0.102,
+        "records": [
+          {
+            "currencyCode": "USD",
+            "tierMinimumUnits": 0.0,
+            "retailPrice": 0.102,
+            "unitPrice": 0.102,
+            "armRegionName": "swedencentral",
+            "location": "SE Central",
+            "effectiveStartDate": "2022-01-01T00:00:00Z",
+            "meterId": "b9263a62-8f85-5f2d-971a-8c15198bfba0",
+            "meterName": "D2s v5",
+            "productId": "DZH318Z08M9W",
+            "skuId": "DZH318Z08M9W/01JW",
+            "productName": "Virtual Machines Dsv5 Series",
+            "skuName": "Standard_D2s_v5",
+            "serviceName": "Virtual Machines",
+            "serviceId": "DZH313Z7MMC8",
+            "serviceFamily": "Compute",
+            "unitOfMeasure": "1 Hour",
+            "type": "Consumption",
+            "isPrimaryMeterRegion": true,
+            "armSkuName": "Standard_D2s_v5"
+          }
+        ]
+      },
+      "function_time": {
+        "usd_per_unit": 2.6e-05,
+        "records": [
+          {
+            "currencyCode": "USD",
+            "tierMinimumUnits": 100000.0,
+            "retailPrice": 2.6e-05,
+            "unitPrice": 2.6e-05,
+            "armRegionName": "swedencentral",
+            "location": "SE Central",
+            "effectiveStartDate": "2024-12-01T00:00:00Z",
+            "meterId": "a5521323-e093-53b5-b6bf-cabc4e098293",
+            "meterName": "On Demand Execution Time",
+            "productId": "DZH318Z0DW2R",
+            "skuId": "DZH318Z0DW2R/0073",
+            "productName": "Flex Consumption",
+            "skuName": "On Demand",
+            "serviceName": "Functions",
+            "serviceId": "DZH319HJX2WX",
+            "serviceFamily": "Compute",
+            "unitOfMeasure": "1 GB Second",
+            "type": "Consumption",
+            "isPrimaryMeterRegion": true,
+            "armSkuName": "On Demand"
+          }
+        ]
+      },
+      "function_requests": {
+        "usd_per_unit": 4e-07,
+        "records": [
+          {
+            "currencyCode": "USD",
+            "tierMinimumUnits": 25000.0,
+            "retailPrice": 4e-06,
+            "unitPrice": 4e-06,
+            "armRegionName": "swedencentral",
+            "location": "SE Central",
+            "effectiveStartDate": "2024-12-01T00:00:00Z",
+            "meterId": "784e0fc6-81bd-55cc-9f0b-3d0f628a7392",
+            "meterName": "On Demand Total Executions",
+            "productId": "DZH318Z0DW2R",
+            "skuId": "DZH318Z0DW2R/0073",
+            "productName": "Flex Consumption",
+            "skuName": "On Demand",
+            "serviceName": "Functions",
+            "serviceId": "DZH319HJX2WX",
+            "serviceFamily": "Compute",
+            "unitOfMeasure": "10",
+            "type": "Consumption",
+            "isPrimaryMeterRegion": true,
+            "armSkuName": "On Demand"
+          }
+        ]
+      }
+    },
+    "workloads": {
+      "moderate-100-2": {
+        "functions": {
+          "requests": 300,
+          "observation_seconds": 600.0786396100002,
+          "database_compute_usd": 0.017002228122283337,
+          "driver_compute_usd_separate": 0.017002228122283337,
+          "function_gb_seconds": 451.6,
+          "function_execution_usd": 0.0118616,
+          "complete_meter_alignment": true,
+          "backend_compute_usd": 0.028863828122283337,
+          "compute_usd_per_100": 0.009621276040761113
+        },
+        "postgresql": {
+          "requests": 300,
+          "observation_seconds": 599.9232488939997,
+          "database_compute_usd": 0.01699782538532999,
+          "driver_compute_usd_separate": 0.01699782538532999,
+          "function_gb_seconds": 0.0,
+          "function_execution_usd": 0.0,
+          "complete_meter_alignment": true,
+          "backend_compute_usd": 0.01699782538532999,
+          "compute_usd_per_100": 0.005665941795109998
+        }
+      },
+      "burst-100-2": {
+        "functions": {
+          "requests": 300,
+          "observation_seconds": 522.2565599540103,
+          "database_compute_usd": 0.014797269198696957,
+          "driver_compute_usd_separate": 0.014797269198696957,
+          "function_gb_seconds": 519.55,
+          "function_execution_usd": 0.013628299999999998,
+          "complete_meter_alignment": true,
+          "backend_compute_usd": 0.028425569198696952,
+          "compute_usd_per_100": 0.009475189732898985
+        },
+        "postgresql": {
+          "requests": 300,
+          "observation_seconds": 515.0704941499862,
+          "database_compute_usd": 0.014593664000916273,
+          "driver_compute_usd_separate": 0.014593664000916273,
+          "function_gb_seconds": 0.0,
+          "function_execution_usd": 0.0,
+          "complete_meter_alignment": true,
+          "backend_compute_usd": 0.014593664000916273,
+          "compute_usd_per_100": 0.004864554666972091
+        }
+      },
+      "burst-100-8": {
+        "functions": {
+          "requests": 300,
+          "observation_seconds": 522.1338656849985,
+          "database_compute_usd": 0.014793792861074954,
+          "driver_compute_usd_separate": 0.014793792861074954,
+          "function_gb_seconds": 2002.5,
+          "function_execution_usd": 0.052185,
+          "complete_meter_alignment": true,
+          "backend_compute_usd": 0.06697879286107496,
+          "compute_usd_per_100": 0.022326264287024986
+        },
+        "postgresql": {
+          "requests": 300,
+          "observation_seconds": 519.9629440629942,
+          "database_compute_usd": 0.01473228341511817,
+          "driver_compute_usd_separate": 0.01473228341511817,
+          "function_gb_seconds": 0.0,
+          "function_execution_usd": 0.0,
+          "complete_meter_alignment": true,
+          "backend_compute_usd": 0.01473228341511817,
+          "compute_usd_per_100": 0.004910761138372723
+        }
+      }
+    },
+    "native_meter_alignment": "all three workloads matched 300 Function executions each"
+  },
+  "cleanup": {
+    "sql_group_status_user_report": "DELETE_COMPLETE",
+    "function_deletion_user_report": "one Function deleted",
+    "support_resource_verification": "42 recorded resources verified absent by user-run read-only check",
+    "all_checked_experiment_resources_removed": true,
+    "verified_at": "2026-11-25T13:04:46.776574Z",
+    "other_retained_resources": [],
+    "scope": "All recorded experiment resources absent and no other retained resources in the checked groups. Not an audit of other Azure groups/subscriptions or a final invoice.",
+    "deployment_groups_cleanup_complete": true
+  },
+  "limitations": [
+    "Driver in-flight cap is 2 or 8; not unrestricted serverless scaling.",
+    "No sparse PostgreSQL study; no claim of eliminating database idle cost.",
+    "CPU hardware, disk and platform configurations differ between providers.",
+    "Compute subtotal excludes supporting infrastructure; AWS broader cost model has a different scope.",
+    "No production authentication on benchmark HTTP endpoint; DB access itself is private/read-only/TLS.",
+    "SF10 results are single validated observations across different treatments, not a replicated distribution."
+  ]
+}
