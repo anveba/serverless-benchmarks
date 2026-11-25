@@ -16,6 +16,49 @@ import psycopg
 NAMESPACE = re.compile(r"sebs_[a-z0-9_]{1,58}")
 
 
+def _azure_secret(config):
+    """Read Key Vault with the worker/VM managed identity; no SDK or query retry."""
+    import urllib.parse
+    import urllib.request
+    uri = config.get('secret_uri', '')
+    if not re.fullmatch(r'https://[a-z0-9-]{3,24}\.vault\.azure\.net/secrets/[A-Za-z0-9-]+(?:/[a-f0-9]+)?',uri):
+        raise ValueError('Invalid Azure SQL secret URI')
+    client_id = config.get('identity_client_id')
+    if client_id and not re.fullmatch(r'[a-fA-F0-9-]{36}',client_id):
+        raise ValueError('Invalid Azure SQL managed identity client ID')
+    endpoint = os.environ.get('IDENTITY_ENDPOINT')
+    if endpoint:
+        parsed = urllib.parse.urlparse(endpoint)
+        if parsed.scheme not in ('http','https') or not parsed.hostname or not (
+            parsed.hostname in ('localhost','127.0.0.1') or parsed.hostname.startswith('169.254.')):
+            raise ValueError('Unexpected Azure managed identity endpoint')
+        header = os.environ.get('IDENTITY_HEADER')
+        if not header:raise RuntimeError('Azure worker managed identity header is missing')
+        params={'api-version':'2019-08-01','resource':'https://vault.azure.net'}
+        headers={'X-IDENTITY-HEADER':header}
+    else:
+        endpoint='http://169.254.169.254/metadata/identity/oauth2/token'
+        params={'api-version':'2018-02-01','resource':'https://vault.azure.net'}
+        headers={'Metadata':'true'}
+    if client_id:params['client_id']=client_id
+    url=endpoint+('&' if '?' in endpoint else '?')+urllib.parse.urlencode(params)
+    with urllib.request.urlopen(urllib.request.Request(url,headers=headers),timeout=10) as response:
+        token=json.loads(response.read())['access_token']
+    with urllib.request.urlopen(urllib.request.Request(uri+'?api-version=7.4',
+            headers={'Authorization':'Bearer '+token}),timeout=10) as response:
+        return json.loads(json.loads(response.read())['value'])
+
+
+def _tls_settings(value, raw):
+    if not all(key in value for key in ('host','port','dbname','user','password','ca_pem')):
+        raise RuntimeError('PostgreSQL bootstrap is not ready')
+    cert=Path('/tmp')/('sebs-sql-'+hashlib.sha256(raw.encode()).hexdigest()+'.crt')
+    _publish_ca(cert,value['ca_pem'])
+    settings={k:value[k] for k in ('host','port','dbname','user','password')}
+    settings.update(sslmode='verify-full',sslrootcert=str(cert))
+    return settings
+
+
 def _publish_ca(path, pem):
     """Publish complete CA files atomically for concurrent clients on one host."""
     fd, temporary = tempfile.mkstemp(prefix=path.name + ".", dir=path.parent)
@@ -66,7 +109,9 @@ class sql:
         config = json.loads(raw)
         if config.get("type") != "postgresql":
             raise ValueError("Unsupported SQL runtime backend")
-        if config.get("secret_arn"):
+        if config.get('provider') == 'azure':
+            settings = _tls_settings(_azure_secret(config), raw)
+        elif config.get("secret_arn"):
             # Lazy AWS imports keep the wrapper usable on local and other FaaS systems.
             import boto3
             from botocore.config import Config
@@ -83,19 +128,7 @@ class sql:
             value = json.loads(
                 client.get_secret_value(SecretId=config["secret_arn"])["SecretString"]
             )
-            if not all(
-                key in value
-                for key in ("host", "port", "dbname", "user", "password", "ca_pem")
-            ):
-                raise RuntimeError("PostgreSQL bootstrap is not ready")
-            cert = Path("/tmp") / (
-                "sebs-sql-" + hashlib.sha256(raw.encode()).hexdigest() + ".crt"
-            )
-            _publish_ca(cert, value["ca_pem"])
-            settings = {
-                k: value[k] for k in ("host", "port", "dbname", "user", "password")
-            }
-            settings.update(sslmode="verify-full", sslrootcert=str(cert))
+            settings = _tls_settings(value, raw)
         else:
             settings = {
                 k: config[k]

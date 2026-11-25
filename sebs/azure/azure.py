@@ -123,6 +123,13 @@ class Azure(System):
         """
         return AzureFunction
 
+    def _sql_backend(self, code_package):
+        """Select the native Azure SQL provider without altering other benchmarks."""
+        if code_package.uses_sql is not True:
+            return None
+        storage = self.system_resources.get_sql_storage()
+        return storage.backend if storage.config.provider == 'azure' else None
+
     @property
     def cli_instance(self) -> AzureCLI:
         """Get Azure CLI instance.
@@ -273,7 +280,7 @@ class Azure(System):
 
         # move all files to 'handler' except package config
         for f in os.listdir(directory):
-            if f not in package_config:
+            if f not in package_config and f != "handler":
                 source_file = os.path.join(directory, f)
                 shutil.move(source_file, handler_dir)
 
@@ -528,6 +535,10 @@ class Azure(System):
         if system_variant.is_container:
             raise NotImplementedError("Container deployment is not supported in Azure")
 
+        if self._sql_backend(code_package) is not None:
+            from sebs.azure.sql_deployment import update
+            return update(self, function, code_package)
+
         assert code_package.has_input_processed
 
         # Update environment variables first since it has a non-deterministic
@@ -571,6 +582,9 @@ class Azure(System):
         Raises:
             RuntimeError: If environment variable operations fail.
         """
+        if self._sql_backend(code_package) is not None:
+            from sebs.azure.sql_deployment import update_envs
+            return update_envs(self, function, code_package, env_variables)
         envs = env_variables.copy()
         if code_package.uses_sql:
             envs.update(self.system_resources.get_sql_storage().envs())
@@ -666,6 +680,9 @@ class Azure(System):
             function: Function instance to configure
             code_package: Benchmark code package with requirements
         """
+        if self._sql_backend(code_package) is not None:
+            from sebs.azure.sql_deployment import update_configuration
+            return update_configuration(self, function, code_package)
         # FIXME: this does nothing currently - we don't specify timeout
         self.logging.warning(
             "Updating function's memory and timeout configuration is not supported."
@@ -684,6 +701,9 @@ class Azure(System):
             Each function has its own storage account.
         """
         function_obj = cast(AzureFunction, self.function_type().deserialize(function))
+        if getattr(function_obj, 'sql_resources', None):
+            from sebs.azure.sql_deployment import delete
+            return delete(self, function_obj)
 
         try:
             self.cli_instance.execute(
@@ -780,6 +800,10 @@ class Azure(System):
 
         if system_variant.is_container:
             raise NotImplementedError("Container deployment is not supported in Azure")
+
+        if self._sql_backend(code_package) is not None:
+            from sebs.azure.sql_deployment import create
+            return create(self, code_package, func_name)
 
         language = code_package.language_name
         language_runtime = self._normalize_runtime_version(language, code_package.language_version)

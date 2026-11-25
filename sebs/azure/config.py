@@ -191,6 +191,9 @@ class AzureCredentials(Credentials):
                 "up environmental variables AZURE_SECRET_APPLICATION_ID and "
                 "AZURE_SECRET_TENANT and AZURE_SECRET_PASSWORD"
             )
+        requested_subscription = config.get('credentials', {}).get('subscription_id') or os.environ.get('AZURE_SUBSCRIPTION_ID')
+        if requested_subscription:
+            ret.subscription_id = requested_subscription
         ret.logging_handlers = handlers
 
         return ret

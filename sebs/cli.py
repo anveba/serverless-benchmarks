@@ -730,10 +730,19 @@ def storage_stop(storage, input_json):
 @storage.command('preflight')
 @click.argument('storage',type=click.Choice(['sql']))
 @click.option('--region',default='us-east-1',show_default=True)
-def storage_preflight(storage,region):
-    """Read-only AWS account/subnet/AMI checks before starting SQL storage."""
-    from sebs.storage.aws_postgresql import preflight
-    preflight(region)
+@click.option('--provider',type=click.Choice(['aws','azure']),default='aws',show_default=True)
+@click.option('--subscription',default=None,help='Azure subscription UUID for read-only preflight.')
+@click.option('--vm-size',default='Standard_D2s_v5',show_default=True)
+def storage_preflight(storage,region,provider,subscription,vm_size):
+    """Read-only cloud prerequisites before starting SQL storage."""
+    if provider == 'azure':
+        if not subscription:
+            raise click.UsageError('--subscription is required for Azure SQL preflight')
+        from sebs.storage.azure_postgresql import preflight
+        preflight(subscription,region,vm_size)
+    else:
+        from sebs.storage.aws_postgresql import preflight
+        preflight(region)
 
 
 @storage.command('status')

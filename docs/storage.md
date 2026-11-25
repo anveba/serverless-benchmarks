@@ -178,3 +178,7 @@ explicit and does not make existing `storage start all` calls provision a databa
 attachment and state directory until removal is verified. Database passwords are
 kept in protected private state for Docker or Secrets Manager for AWS, not in the
 benchmark input or public storage attachment.
+
+Azure PostgreSQL VM storage is also implemented through the same SQL commands.
+Its native Functions path uses private Flex Consumption; live validation is pending.
+See [Azure PostgreSQL setup](sql-postgresql-azure.md).

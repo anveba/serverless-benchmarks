@@ -335,3 +335,9 @@ python -B -m unittest tests.test_sql_storage tests.test_sql_postgresql \
 
 Reproduction and optional diagnostics: [AWS PostgreSQL evaluation](sql-postgresql-evaluation.md).
 Results, limitations and cleanup: [handoff](../handoff/POSTGRESQL_HANDOFF.md).
+
+## Azure provider
+
+The same benchmark now has a native Azure storage/Flex Functions implementation.
+Live Azure validation is pending; follow the [Azure guide](sql-postgresql-azure.md).
+This is separate from the older Azure DuckDB/Synapse evaluation.

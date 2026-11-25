@@ -28,15 +28,20 @@ class PostgreSQLConfig:
     subnet_id: str = ""
     ami_id: str = ""
     instance_type: str = "m7i-flex.large"
+    azure_subscription_id: str = ""
+    azure_vm_size: str = "Standard_D2s_v5"
+    azure_vm_image: str = "Canonical:ubuntu-24_04-lts:server:latest"
+    azure_disk_sku: str = "StandardSSD_LRS"
+    azure_vnet_cidr: str = "10.73.0.0/16"
 
     @classmethod
     def deserialize(cls, data):
         if not isinstance(data, dict) or set(data) - set(cls.__dataclass_fields__):
             raise ValueError("Unknown PostgreSQL storage configuration fields")
         ret = cls(**data)
-        if ret.type != "postgresql" or ret.provider not in ("docker", "aws"):
+        if ret.type != "postgresql" or ret.provider not in ("docker", "aws", "azure"):
             raise ValueError(
-                "SQL storage supports PostgreSQL with provider docker or aws"
+                "SQL storage supports PostgreSQL with provider docker, aws or azure"
             )
         if (
             type(ret.cpus) is not int
@@ -66,6 +71,25 @@ class PostgreSQLConfig:
             raise ValueError(
                 "AWS SQL storage requires subnet_id and ami_id from preflight"
             )
+        if ret.provider == "azure":
+            import ipaddress
+            import uuid
+            try:
+                ret.azure_subscription_id = str(uuid.UUID(ret.azure_subscription_id))
+                network = ipaddress.ip_network(ret.azure_vnet_cidr, strict=True)
+            except (ValueError, TypeError, AttributeError):
+                raise ValueError("Azure SQL storage requires a subscription UUID and valid IPv4 VNet CIDR") from None
+            private_ranges = [ipaddress.ip_network(value) for value in ('10.0.0.0/8','172.16.0.0/12','192.168.0.0/16')]
+            if network.version != 4 or not 16 <= network.prefixlen <= 22 or not any(network.subnet_of(n) for n in private_ranges if network.version == n.version):
+                raise ValueError("Azure SQL VNet must be a private IPv4 /16 through /22")
+            if not re.fullmatch(r"[a-z][a-z0-9]+", ret.region):
+                raise ValueError("Set an Azure region, for example swedencentral")
+            if not re.fullmatch(r"Standard_[A-Za-z0-9_]+", ret.azure_vm_size):
+                raise ValueError("Invalid Azure VM size")
+            if not re.fullmatch(r"Canonical:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+:[A-Za-z0-9_.-]+", ret.azure_vm_image):
+                raise ValueError("Use a Canonical Ubuntu image URN")
+            if ret.azure_disk_sku not in ("StandardSSD_LRS", "Premium_LRS"):
+                raise ValueError("Unsupported Azure PostgreSQL disk SKU")
         return ret
 
     def serialize(self):

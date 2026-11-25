@@ -96,8 +96,13 @@ class SystemResources(ABC, LoggingBase):
             config = self._config.resources.sql_storage_config
             if config is None:
                 raise RuntimeError("SQL storage is missing. Run 'sebs storage start sql' and pass --storage-configuration.")
-            if config.provider == 'aws' and self._config._name != 'aws':
-                raise ValueError('AWS PostgreSQL storage requires the AWS deployment; use Docker storage for a reachable self-hosted service')
+            if config.provider in ('aws','azure') and self._config._name != config.provider:
+                raise ValueError(config.provider+' PostgreSQL storage requires its matching FaaS deployment')
+            if config.provider == 'azure':
+                if config.region != self._config.region:
+                    raise ValueError('Azure PostgreSQL storage and Functions must use the same region')
+                if config.azure_subscription_id.lower() != self._config.credentials.subscription_id.lower():
+                    raise ValueError('Azure PostgreSQL storage and Functions subscriptions differ')
             self._sql_storage = PostgreSQL.deserialize(config, self._cache_client,
                 self._config.resources, self._docker_client, aws_session=getattr(self,'_session',None))
             self._sql_storage.logging_handlers = self._logging_handlers

@@ -215,3 +215,7 @@ cache
 
 # Local PostgreSQL storage settings
 /configs/storage-postgresql-aws.json
+
+# Local Azure PostgreSQL experiment configuration
+/configs/sql-postgresql-azure.json
+/configs/storage-postgresql-azure.json

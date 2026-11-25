@@ -1,5 +1,5 @@
 # Copyright 2020-2026 ETH Zurich and the SeBS authors. All rights reserved.
-"""PostgreSQL storage with Docker and AWS lifecycle/transport implementations."""
+"""PostgreSQL storage with Docker, AWS and Azure lifecycle/transport providers."""
 import hashlib
 import json
 import os
@@ -99,6 +99,11 @@ class PostgreSQL(SQLStorage):
                 "subnet_id",
                 "ami_id",
                 "instance_type",
+                "azure_subscription_id",
+                "azure_vm_size",
+                "azure_vm_image",
+                "azure_disk_sku",
+                "azure_vnet_cidr",
             ):
                 if getattr(saved, key) != getattr(config, key):
                     raise ValueError(
@@ -115,6 +120,10 @@ class PostgreSQL(SQLStorage):
             from sebs.storage.aws_postgresql import AWSPostgreSQL
 
             self.backend = AWSPostgreSQL(self.config, aws_session)
+        elif self.config.provider == "azure":
+            from sebs.storage.azure_postgresql import AzurePostgreSQL
+
+            self.backend = AzurePostgreSQL(self.config)
 
     @classmethod
     def deserialize(

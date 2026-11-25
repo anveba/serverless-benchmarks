@@ -62,3 +62,6 @@ Recorded AWS results and limitations: [PostgreSQL handoff](../../../handoff/POST
 Native benchmark setup requires no evaluation helper. The optional cloud driver,
 resource diagnostics, tuning and cost/reporting tools are documented separately in
 the [evaluation guide](../../../docs/sql-postgresql-evaluation.md).
+
+Azure VM storage and a private Flex Consumption deployment path are implemented;
+live Azure validation is pending. [Azure setup](../../../docs/sql-postgresql-azure.md).

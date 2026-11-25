@@ -96,3 +96,19 @@ Module contents
    :members:
    :show-inheritance:
    :undoc-members:
+
+sebs.azure.control module
+-------------------------
+
+.. automodule:: sebs.azure.control
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+sebs.azure.sql_deployment module
+--------------------------------
+
+.. automodule:: sebs.azure.sql_deployment
+   :members:
+   :undoc-members:
+   :show-inheritance:

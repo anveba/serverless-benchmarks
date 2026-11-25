@@ -5,6 +5,8 @@ The AzureFunction class extends the base Function class and adds
 one Azure-specific property: storage account associated with this function.
 """
 
+from typing import Optional
+
 from sebs.azure.config import AzureResources
 from sebs.faas.function import Function, FunctionConfig
 
@@ -23,6 +25,7 @@ class AzureFunction(Function):
         code_hash: str,
         function_storage: AzureResources.Storage,
         cfg: FunctionConfig,
+        sql_resources: Optional[dict] = None,
     ) -> None:
         """Initialize Azure Function.
 
@@ -35,6 +38,7 @@ class AzureFunction(Function):
         """
         super().__init__(benchmark, name, code_hash, cfg)
         self.function_storage = function_storage
+        self.sql_resources = sql_resources
 
     def serialize(self) -> dict:
         """Serialize function to dictionary.
@@ -45,6 +49,7 @@ class AzureFunction(Function):
         return {
             **super().serialize(),
             "function_storage": self.function_storage.serialize(),
+            **({"sql_resources": self.sql_resources} if self.sql_resources is not None else {}),
         }
 
     @staticmethod
@@ -70,6 +75,7 @@ class AzureFunction(Function):
             cached_config["hash"],
             AzureResources.Storage.deserialize(cached_config["function_storage"]),
             cfg,
+            sql_resources=cached_config.get("sql_resources"),
         )
         from sebs.azure.triggers import HTTPTrigger
 

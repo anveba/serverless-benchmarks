@@ -83,3 +83,27 @@ sebs.storage.aws_postgresql module
 .. automodule:: sebs.storage.aws_postgresql
    :members:
    :show-inheritance:
+
+sebs.storage.azure_postgresql module
+------------------------------------
+
+.. automodule:: sebs.storage.azure_postgresql
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+sebs.storage.azure_postgresql_template module
+---------------------------------------------
+
+.. automodule:: sebs.storage.azure_postgresql_template
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+sebs.storage.azure_postgresql_bootstrap module
+----------------------------------------------
+
+.. automodule:: sebs.storage.azure_postgresql_bootstrap
+   :members:
+   :undoc-members:
+   :show-inheritance:
